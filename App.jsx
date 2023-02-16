@@ -16,26 +16,6 @@ function LoginPhone({ navigation }){
   const [confirmCodeState, setConfirmCodeState] = useState("");
   const [confirmationState, setConfirmation] = useState(null);
 
-  async function SendAuthCodePhone(phoneNumber){
-    console.log(phoneNumber);
-    const confirmation = await auth().signInWithPhoneNumber(phoneNumber);
-    setConfirmation(confirmation);
-  }
-  async function confirmCode(){
-    console.log(confirmCodeState);
-    try{
-      const res=await confirmationState.confirm(confirmCodeState);
-      console.log(res);
-      navigation.navigate(Home);  
-      // bu kısım içinde login işlemi gerçekleşiyor kod doğru girilmişse
-    }
-    catch(err){
-      console.log('invalid code.');
-      crashlytics().log("invalid code entered");
-      crashlytics().recordError(err);
-    }
-  }
-
   return(
     !confirmationState ? (
       <View key="phone" style = {styles.container}>
@@ -63,43 +43,91 @@ function LoginPhone({ navigation }){
   )
 }
 /* importing crashlytics does not work with the expo go app, so i will try to import both authentication and crashlytics tomorrow. */
-function sendSMSCode(){
-
-}
-
-function LoginEmail(){
-  const [phoneNumberState, setPhoneNumberState] = useState("");
-  const [confirmCodeState, setConfirmCodeState] = useState("");
-  const [confirmationState, setConfirmation] = useState(null);
-  return (
-    <View key="email" style = {styles.loginContainer}>
-      <Text style = { styles.loginTitle}>Login Using Your Email & Password</Text>
-      <TextInput  
-      style = {styles.input}
-      placeholderTextColor = "#ddd"
-      placeholder = "email">
-      </TextInput>
-      <TextInput 
-      secureTextEntry = {true}
-      style = {styles.input}
-      placeholderTextColor = "#ddd"
-      placeholder = "password">
-      </TextInput>
-      <Button title='Login'></Button>
-    </View>
-    )
-}
-
 function Login({navigation}){
   const [loginSelection, setLoginMethod] = useState(0);
-  let ret;
-  if(loginSelection == 0) ret = LoginEmail();
-  if(loginSelection == 1) ret = LoginPhone();
-  let buttons = <View key="loginBtns" style = {styles.buttonGroup}>
-     <Button style = {styles.buttonGroupButton} title='Email' onPress={() => {setLoginMethod(0); navigation.navigate('Login');}}></Button>
-     <Button style = {styles.buttonGroupButton} title='Phone Number' onPress={() => {setLoginMethod(1); navigation.navigate('Login');;}} ></Button>
-  </View>
-  return [ret, buttons]
+  const [isButtonsVisible, setButtonVisibility] = useState(true);
+  const [phoneNumberState, setPhoneNumberState] = useState("");
+  const [phoneConfirmCodeState, setConfirmCodeState] = useState("");
+  const [phoneConfirmationState, setConfirmation] = useState(null);
+
+  async function SendAuthCodePhone(phoneNumber){
+    const confirmation = await auth().signInWithPhoneNumber(phoneNumber);
+    setConfirmation(confirmation);
+    setButtonVisibility(false);
+  }
+
+  async function confirmPhoneCode(){
+    console.log(phoneConfirmCodeState);
+    try{
+      const res=await phoneConfirmationState.confirm(phoneConfirmCodeState);
+      console.log(res);
+      navigation.navigate(Home);  
+      // bu kısım içinde login işlemi gerçekleşiyor kod doğru girilmişse
+    }
+    catch(err){
+      console.log('invalid code.');
+      crashlytics().log("invalid code entered");
+      crashlytics().recordError(err);
+    }
+  }
+  return(
+    <View style = {styles.container}>
+      {
+        loginSelection == 0 ? 
+        (
+          <View key="email" style = {styles.loginContainer}>
+          <Text style = { styles.loginTitle}>Login Using Your Email & Password</Text>
+          <TextInput  
+          style = {styles.input}
+          placeholderTextColor = "#ddd"
+          placeholder = "email">
+          </TextInput>
+          <TextInput 
+          secureTextEntry = {true}
+          style = {styles.input}
+          placeholderTextColor = "#ddd"
+          placeholder = "password">
+          </TextInput>
+          <Button title='Login'></Button>
+        </View>
+        ) :
+        (
+          !phoneConfirmationState ? (
+            <View key="phone" style = {styles.loginContainer}>
+              <Text style= {styles.loginTitle}>Login Using Your Phone Number</Text>
+              <TextInput  
+              style = {styles.input}
+              placeholderTextColor = "#ddd"
+              placeholder = "Phone Number"
+              onChangeText={(text) => setPhoneNumberState(text)}>
+              </TextInput>
+            <Button title='Send Authentication Code' onPress={() => { SendAuthCodePhone(phoneNumberState)}}/>
+          </View>
+           ) : (
+            <View key="confirmCode">
+              <Text style= {styles.loginTitle}>Enter your 6 digit code below.</Text>
+              <TextInput
+              style = {styles.input}
+              placeholderTextColor = "#ddd"
+              placeholder = "Phone Number"
+              onChangeText={text => setConfirmCodeState(text)}
+              ></TextInput>
+              <Button title='Confirm Code' onPress={()=> confirmPhoneCode()}></Button>
+            </View>
+           )
+        )
+      }
+      {
+        isButtonsVisible ? (
+          <View key="loginBtns" style = {styles}>
+            <Button style = {styles.buttonGroupButton} title='Email' onPress={() => {setLoginMethod(0); navigation.navigate('Login');}}></Button>
+            <Button style = {styles.buttonGroupButton} title='Phone Number' onPress={() => {setLoginMethod(1); navigation.navigate('Login');;}} ></Button>
+          </View>
+        )
+        : (null)
+      }
+    </View>
+    )
 }
 
 const Drawer = createDrawerNavigator();
@@ -125,7 +153,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   loginContainer:{
-    flex: 0.5,
+    flex: 1,
     backgroundColor: '#777',
     alignItems: 'center',
     justifyContent: 'center',
@@ -138,7 +166,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   },
   buttonGroup:{
-      flex: 0.5,
       paddingBottom: 100,
       flexDirection: 'row',
       backgroundColor : '#777',
