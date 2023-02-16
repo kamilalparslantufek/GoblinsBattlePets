@@ -7,48 +7,64 @@ import { createDrawerNavigator } from '@react-navigation/drawer';
 import { NavigationContainer } from '@react-navigation/native';
 import Home from './screens/Home'
 
-// just trying out flow of the phone number login 
-function LoginGoogle(){
-}
+// // just trying out flow of the phone number login 
+// function LoginGoogle(){
+// }
 
-function LoginPhone({ navigation }){
-  const [phoneNumberState, setPhoneNumberState] = useState("");
-  const [confirmCodeState, setConfirmCodeState] = useState("");
-  const [confirmationState, setConfirmation] = useState(null);
+// function LoginPhone({ navigation }){
+//   const [phoneNumberState, setPhoneNumberState] = useState("");
+//   const [confirmCodeState, setConfirmCodeState] = useState("");
+//   const [confirmationState, setConfirmation] = useState(null);
 
-  return(
-    !confirmationState ? (
-      <View key="phone" style = {styles.container}>
-        <Text style= {styles.loginTitle}>Login Using Your Phone Number</Text>
-        <TextInput  
-        style = {styles.input}
-        placeholderTextColor = "#ddd"
-        placeholder = "Phone Number"
-        onChangeText={(text) => setPhoneNumberState(text)}>
-        </TextInput>
-      <Button title='Send Authentication Code' onPress={() => { SendAuthCodePhone(phoneNumberState)}}/>
-    </View>
-     ) : (
-      <View key="confirmCode">
-        <Text style= {styles.loginTitle}>Enter your 6 digit code below.</Text>
-        <TextInput
-        style = {styles.input}
-        placeholderTextColor = "#ddd"
-        placeholder = "Phone Number"
-        onChangeText={text => setConfirmCodeState(text)}
-        ></TextInput>
-        <Button title='Confirm Code' onPress={()=> confirmCode()}></Button>
-      </View>
-     )
-  )
-}
-/* importing crashlytics does not work with the expo go app, so i will try to import both authentication and crashlytics tomorrow. */
+//   return(
+//     !confirmationState ? (
+//       <View key="phone" style = {styles.container}>
+//         <Text style= {styles.loginTitle}>Login Using Your Phone Number</Text>
+//         <TextInput  
+//         style = {styles.input}
+//         placeholderTextColor = "#ddd"
+//         placeholder = "Phone Number"
+//         onChangeText={(text) => setPhoneNumberState(text)}>
+//         </TextInput>
+//       <Button title='Send Authentication Code' onPress={() => { SendAuthCodePhone(phoneNumberState)}}/>
+//     </View>
+//      ) : (
+//       <View key="confirmCode">
+//         <Text style= {styles.loginTitle}>Enter your 6 digit code below.</Text>
+//         <TextInput
+//         style = {styles.input}
+//         placeholderTextColor = "#ddd"
+//         placeholder = "Phone Number"
+//         onChangeText={text => setConfirmCodeState(text)}
+//         ></TextInput>
+//         <Button title='Confirm Code' onPress={()=> confirmCode()}></Button>
+//       </View>
+//      )
+//   )
+// }
+
 function Login({navigation}){
   const [loginSelection, setLoginMethod] = useState(0);
   const [isButtonsVisible, setButtonVisibility] = useState(true);
   const [phoneNumberState, setPhoneNumberState] = useState("");
   const [phoneConfirmCodeState, setConfirmCodeState] = useState("");
   const [phoneConfirmationState, setConfirmation] = useState(null);
+  const [emailTextState, setEmailState] = useState("");
+  const [passwordTextState, setPasswordState] = useState("");
+  const [errorStatus, setErrorState] = useState(false);
+
+  async function EmailLogin(){
+    auth().signInWithEmailAndPassword(emailTextState,passwordTextState)
+      .then((res) => {
+        console.log(res);
+        navigation.navigate(Home)
+      })
+      .catch((err) => {
+          setErrorState(true);
+          crashlytics().log("invalid email & password")
+          crashlytics().recordError(err)
+      });
+  }
 
   async function SendAuthCodePhone(phoneNumber){
     const confirmation = await auth().signInWithPhoneNumber(phoneNumber);
@@ -61,10 +77,11 @@ function Login({navigation}){
     try{
       const res=await phoneConfirmationState.confirm(phoneConfirmCodeState);
       console.log(res);
-      navigation.navigate(Home);  
+      navigation.navigate(Home);
       // bu kısım içinde login işlemi gerçekleşiyor kod doğru girilmişse
     }
     catch(err){
+      setErrorState(true);
       console.log('invalid code.');
       crashlytics().log("invalid code entered");
       crashlytics().recordError(err);
@@ -80,15 +97,18 @@ function Login({navigation}){
           <TextInput  
           style = {styles.input}
           placeholderTextColor = "#ddd"
-          placeholder = "email">
+          placeholder = "email"
+          onChangeText={(text) => setEmailState(text)}>
           </TextInput>
           <TextInput 
           secureTextEntry = {true}
           style = {styles.input}
           placeholderTextColor = "#ddd"
-          placeholder = "password">
+          placeholder = "password"
+          onChangeText={(text) => setPasswordState(text)}>
           </TextInput>
-          <Button title='Login'></Button>
+          { errorStatus ? (<Text>Check your email & password.</Text>) : null}
+          <Button title='Login' onPress={() => { EmailLogin()}}></Button>
         </View>
         ) :
         (

@@ -3,13 +3,20 @@ import { BLIZZARD_API_KEY, BLIZZARD_API_SECRET} from '@env';
 import crashlytics from '@react-native-firebase/crashlytics'
 import { ActivityIndicator, Text, View, Button, Image, StyleSheet } from 'react-native';
 import { useEffect, useState, useRef } from 'react';
+import auth from '@react-native-firebase/auth'
 
 const Home = function Home({ navigation }){
-
+    
+    
+    const [currentUser, setUser] = useState();
     const [homePagePetData, setHomePagePetData] = useState([]);
     const [isLoading, setLoading] = useState(true);
     const apiAccessToken = useRef("");
-    
+    const checkUserStatus = async () => {
+      const currentUser = auth().currentUser;
+      setUser(currentUser);
+    }
+
     const getDataAxios = async () => {
     return axios.post(`https://oauth.battle.net/token?grant_type=client_credentials&client_id=${BLIZZARD_API_KEY}&client_secret=${BLIZZARD_API_SECRET}`)
         .then((res) => {
@@ -70,10 +77,9 @@ const Home = function Home({ navigation }){
                 setHomePagePetData(null);
         });
     }
-
-
     useEffect(() => {
       setLoading(true);
+      checkUserStatus();
       getDataAxios();
     }, []);
     
@@ -112,12 +118,19 @@ const Home = function Home({ navigation }){
                 }
               </View>
             </View>
-            <View style= {{alignItems: 'center'}}>
-              <Text style= {{color:'white'}}>Log in to learn about more pets.</Text>
-              <View style={{width: '80%'}}>
-                <Button color='#D4AF37' title='Login' onPress={ () => navigation.navigate('Login')}></Button>
+            { currentUser == undefined
+            ? 
+              <View style= {{alignItems: 'center'}}>
+                <Text style= {{color:'white'}}>Log in to learn about more pets.</Text>
+                <View style={{width: '80%'}}>
+                  
+                  <Button color='#D4AF37' title='Login' onPress={ () => navigation.navigate('Login')}></Button>
+                </View>
               </View>
+            : <View style = {{alignItems: 'center'}}>
+              <Text style= {{color:'white'}}>Hello {currentUser.email}</Text>
             </View>
+            }
           </View>
         ) }
       </View>
