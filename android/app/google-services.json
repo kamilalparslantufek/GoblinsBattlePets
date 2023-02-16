@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "681058578312",
+    "project_id": "goblinsbattlepets",
+    "storage_bucket": "goblinsbattlepets.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:681058578312:android:0385466c1db4818065143d",
+        "android_client_info": {
+          "package_name": "com.goblinsbattlepets"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "681058578312-c227o93h4k2l9dkdh0krb2ha76ef2ch4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD2G-uyrNbfioapart21Jzd_pk5beCUbjE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "681058578312-728vu1cj8rmf78a1jqgknrllm32171cl.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
