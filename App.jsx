@@ -110,7 +110,7 @@ function Login({navigation}){
       }
       {
         isButtonsVisible ? (
-          <View key="loginBtns" style = {styles}>
+          <View key="loginBtns" style = {styles.buttonGroup}>
             <Button style = {styles.buttonGroupButton} title='Email' onPress={() => {setLoginMethod(0); navigation.navigate('Login');}}></Button>
             <Button style = {styles.buttonGroupButton} title='Phone Number' onPress={() => {setLoginMethod(1); navigation.navigate('Login');;}} ></Button>
           </View>
@@ -154,11 +154,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   loginContainer:{
-    flex: 1,
-    backgroundColor: '#777',
+    backgroundColor: '#121212',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop:'25%'
+    width: '100%'
   },
   containerinfo:{
     flexDirection: 'row',
@@ -167,9 +166,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   },
   buttonGroup:{
-      paddingBottom: 100,
+      paddingTop: '15%',
       flexDirection: 'row',
-      backgroundColor : '#777',
+      backgroundColor : '#121212',
       alignItems: 'center',
       justifyContent: 'center'
   },

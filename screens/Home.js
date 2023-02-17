@@ -78,7 +78,15 @@ const Home = function Home({ navigation }){
         });
     }
     const getPetListData = async () => {
+        return axios.post(`https://oauth.battle.net/token?grant_type=client_credentials&client_id=${BLIZZARD_API_KEY}&client_secret=${BLIZZARD_API_SECRET}`)
+          .then((res) => {
+              apiAccessToken.current = res.data.access_token;
+              axios.get(`https://eu.api.blizzard.com/data/wow/pet/index?namespace=static-eu&locale=en_GB&access_token=${res.data.access_token}`)
+                .then((res) => {
+                  console.log(res.data.pets);
 
+                });
+          })
     }
 
     function onAuthStateChanged(currentUser){
