@@ -7,41 +7,13 @@ import { createDrawerNavigator } from '@react-navigation/drawer';
 import { NavigationContainer } from '@react-navigation/native';
 import Home from './screens/Home'
 
-// // just trying out flow of the phone number login 
-// function LoginGoogle(){
-// }
-
-// function LoginPhone({ navigation }){
-//   const [phoneNumberState, setPhoneNumberState] = useState("");
-//   const [confirmCodeState, setConfirmCodeState] = useState("");
-//   const [confirmationState, setConfirmation] = useState(null);
-
-//   return(
-//     !confirmationState ? (
-//       <View key="phone" style = {styles.container}>
-//         <Text style= {styles.loginTitle}>Login Using Your Phone Number</Text>
-//         <TextInput  
-//         style = {styles.input}
-//         placeholderTextColor = "#ddd"
-//         placeholder = "Phone Number"
-//         onChangeText={(text) => setPhoneNumberState(text)}>
-//         </TextInput>
-//       <Button title='Send Authentication Code' onPress={() => { SendAuthCodePhone(phoneNumberState)}}/>
-//     </View>
-//      ) : (
-//       <View key="confirmCode">
-//         <Text style= {styles.loginTitle}>Enter your 6 digit code below.</Text>
-//         <TextInput
-//         style = {styles.input}
-//         placeholderTextColor = "#ddd"
-//         placeholder = "Phone Number"
-//         onChangeText={text => setConfirmCodeState(text)}
-//         ></TextInput>
-//         <Button title='Confirm Code' onPress={()=> confirmCode()}></Button>
-//       </View>
-//      )
-//   )
-// }
+function Logout({navigation}){
+  auth()
+  .signOut()
+  .then(() => {
+    navigation.navigate(Home);
+  })
+}
 
 function Login({navigation}){
   const [loginSelection, setLoginMethod] = useState(0);
@@ -73,7 +45,6 @@ function Login({navigation}){
   }
 
   async function confirmPhoneCode(){
-    console.log(phoneConfirmCodeState);
     try{
       const res=await phoneConfirmationState.confirm(phoneConfirmCodeState);
       console.log(res);
@@ -152,14 +123,24 @@ function Login({navigation}){
 
 const Drawer = createDrawerNavigator();
 export default function App() {
+  const [currentUser, setUser] = useState();
+  function onAuthStateChanged(currentUser){
+    setUser(currentUser);
+  }
   useEffect(() => {
-    crashlytics().recordError(new Error('app mounted? '));
-  }, [])
+    const sub = auth().onAuthStateChanged(onAuthStateChanged);  
+    return sub;
+  })
+
   return (
     <NavigationContainer>
       <Drawer.Navigator initialRouteName="Home"  useLegacyImplementation={true}>
         <Drawer.Screen name="Home" component = { Home } />
-        <Drawer.Screen name="Login" component = { Login } />
+        {currentUser == undefined ? 
+        (<Drawer.Screen name="Login" component = { Login } />)
+        :
+        (<Drawer.Screen name="Logout" component={ Logout } />)
+        }
       </Drawer.Navigator>
     </NavigationContainer>
   );

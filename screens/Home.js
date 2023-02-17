@@ -9,15 +9,15 @@ const Home = function Home({ navigation }){
     
     
     const [currentUser, setUser] = useState();
-    const [homePagePetData, setHomePagePetData] = useState([]);
+    const [singlePetData, setSinglePetData] = useState([]);
+    const [petListData, setPetListData] = useState([]);
     const [isLoading, setLoading] = useState(true);
     const apiAccessToken = useRef("");
     const checkUserStatus = async () => {
       const currentUser = auth().currentUser;
       setUser(currentUser);
     }
-
-    const getDataAxios = async () => {
+    const getSinglePetData = async () => {
     return axios.post(`https://oauth.battle.net/token?grant_type=client_credentials&client_id=${BLIZZARD_API_KEY}&client_secret=${BLIZZARD_API_SECRET}`)
         .then((res) => {
             apiAccessToken.current = res.data.access_token;
@@ -34,14 +34,14 @@ const Home = function Home({ navigation }){
                             "icon" : res.data.icon,
                             "creature_id" : res.data.creature.id
                         }
-                        setHomePagePetData(petData);
+                        setSinglePetData(petData);
                     axios.get(`https://eu.api.blizzard.com/data/wow/creature/${petData.creature_id}?namespace=static-eu&locale=en_GB&access_token=${apiAccessToken.current}`)
                         .then((res) => {
                             const display_data = res.data.creature_displays[0]
                             axios.get(`https://eu.api.blizzard.com/data/wow/media/creature-display/${display_data.id}?namespace=static-eu&locale=en_GB&access_token=${apiAccessToken.current}`)
                                 .then((res) => {
                                 const display_asset = res.data.assets[0]
-                                setHomePagePetData(prevState => ({
+                                setSinglePetData(prevState => ({
                                     ...prevState,
                                     displayImage: display_asset.value
                                 }))
@@ -74,13 +74,26 @@ const Home = function Home({ navigation }){
         .catch((err) => {
                 crashlytics().log('Getting Blizzard Access Token.')
                 crashlytics().recordError(err);
-                setHomePagePetData(null);
+                setSinglePetData(null);
         });
     }
+    const getPetListData = async () => {
+
+    }
+
+    function onAuthStateChanged(currentUser){
+      setUser(currentUser);
+      if(isLoading) setLoading(false);
+    }
+    useEffect(() => {
+      const sub = auth().onAuthStateChanged(onAuthStateChanged);  
+      return sub;
+    })
+
     useEffect(() => {
       setLoading(true);
       checkUserStatus();
-      getDataAxios();
+      getSinglePetData();
     }, []);
     
     return (
@@ -97,13 +110,13 @@ const Home = function Home({ navigation }){
                     width: 30,
                     height: 30,
                   }}
-                  source={{uri: homePagePetData.icon}}
+                  source={{uri: singlePetData.icon}}
                   /> : <View></View>
                 }
-                <Text style={styles.loginTitle}>{homePagePetData.name}</Text>
+                <Text style={styles.loginTitle}>{singlePetData.name}</Text>
               </View>
               <View>
-                <Text style={styles.loginTitle}>{homePagePetData.description}</Text>
+                <Text style={styles.loginTitle}>{singlePetData.description}</Text>
                 {
                   !isLoading ? <Image 
                   resizeMode='center'
@@ -114,7 +127,7 @@ const Home = function Home({ navigation }){
                     maxHeight: 600,
                     margin: '10%'
                   }}
-                  source={{uri: homePagePetData.displayImage}}/> : <View></View>
+                  source={{uri: singlePetData.displayImage}}/> : <View></View>
                 }
               </View>
             </View>
