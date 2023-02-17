@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "681058578312-blpi3u1sc55n9j4kiu289jfjiptfuced.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.goblinsbattlepets",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
           "client_id": "681058578312-c227o93h4k2l9dkdh0krb2ha76ef2ch4.apps.googleusercontent.com",
           "client_type": 3
         }

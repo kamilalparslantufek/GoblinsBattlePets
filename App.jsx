@@ -2,10 +2,12 @@ import 'react-native-gesture-handler';
 import { useEffect, useState, useRef } from 'react';
 import auth from '@react-native-firebase/auth';
 import crashlytics from '@react-native-firebase/crashlytics';
-import { ActivityIndicator, StyleSheet, Text, View, Button, TextInput, Image } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View, Button, TextInput, Image, VirtualizedList } from 'react-native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { NavigationContainer } from '@react-navigation/native';
 import Home from './screens/Home'
+import Register from './screens/Register';
+import styles from './styles/styles'
 
 function Logout({navigation}){
   auth()
@@ -29,7 +31,7 @@ function Login({navigation}){
     auth().signInWithEmailAndPassword(emailTextState,passwordTextState)
       .then((res) => {
         console.log(res);
-        navigation.navigate(Home)
+        // navigation.navigate(Home)
       })
       .catch((err) => {
           setErrorState(true);
@@ -39,16 +41,22 @@ function Login({navigation}){
   }
 
   async function SendAuthCodePhone(phoneNumber){
-    const confirmation = await auth().signInWithPhoneNumber(phoneNumber);
-    setConfirmation(confirmation);
-    setButtonVisibility(false);
+    try{
+      const confirmation = await auth().signInWithPhoneNumber(phoneNumber);
+      setConfirmation(confirmation);
+      setButtonVisibility(false);
+    }
+    catch(err){
+      crashlytics().log(`Invalid Phone Number.`);
+      setButtonVisibility(true);
+    }
   }
 
   async function confirmPhoneCode(){
     try{
       const res=await phoneConfirmationState.confirm(phoneConfirmCodeState);
       console.log(res);
-      navigation.navigate(Home);
+      // navigation.navigate(Home);
       // bu kısım içinde login işlemi gerçekleşiyor kod doğru girilmişse
     }
     catch(err){
@@ -95,12 +103,12 @@ function Login({navigation}){
             <Button title='Send Authentication Code' onPress={() => { SendAuthCodePhone(phoneNumberState)}}/>
           </View>
            ) : (
-            <View key="confirmCode">
+            <View key="confirmCode" style = {styles.loginContainer}>
               <Text style= {styles.loginTitle}>Enter your 6 digit code below.</Text>
               <TextInput
               style = {styles.input}
               placeholderTextColor = "#ddd"
-              placeholder = "Phone Number"
+              placeholder = ""
               onChangeText={text => setConfirmCodeState(text)}
               ></TextInput>
               <Button title='Confirm Code' onPress={()=> confirmPhoneCode()}></Button>
@@ -110,9 +118,14 @@ function Login({navigation}){
       }
       {
         isButtonsVisible ? (
-          <View key="loginBtns" style = {styles.buttonGroup}>
-            <Button style = {styles.buttonGroupButton} title='Email' onPress={() => {setLoginMethod(0); navigation.navigate('Login');}}></Button>
-            <Button style = {styles.buttonGroupButton} title='Phone Number' onPress={() => {setLoginMethod(1); navigation.navigate('Login');;}} ></Button>
+          <View>
+            <View key="loginBtns" style = {styles.buttonGroup}>
+              <Button style = {styles.buttonGroupButton} title='Email' onPress={() => {setLoginMethod(0); navigation.navigate('Login');}}></Button>
+              <Button style = {styles.buttonGroupButton} title='Phone Number' onPress={() => {setLoginMethod(1); navigation.navigate('Login');;}} ></Button>
+            </View>
+            <View key="register" style= {{ paddingTop: '5%'}}>
+              <Button style={styles.registerFormButton} title='Register' onPress={ () => { navigation.navigate(Register)} }></Button>
+            </View>
           </View>
         )
         : (null)
@@ -127,66 +140,25 @@ export default function App() {
   function onAuthStateChanged(currentUser){
     setUser(currentUser);
   }
-  useEffect(() => {
-    const sub = auth().onAuthStateChanged(onAuthStateChanged);  
-    return sub;
-  })
+  // useEffect(() => {
+  //   const sub = auth().onAuthStateChanged(onAuthStateChanged);  
+  //   return sub;
+  // })
 
   return (
     <NavigationContainer>
-      <Drawer.Navigator initialRouteName="Home"  useLegacyImplementation={true}>
-        <Drawer.Screen name="Home" component = { Home } />
         {currentUser == undefined ? 
-        (<Drawer.Screen name="Login" component = { Login } />)
+          <Drawer.Navigator initialRouteName="Home"  useLegacyImplementation={true}>
+              <Drawer.Screen name="Home" component = { Home } />
+              <Drawer.Screen name="Login" component = { Login } />
+              <Drawer.Screen name="Register" component = { Register } />
+          </Drawer.Navigator>
         :
-        (<Drawer.Screen name="Logout" component={ Logout } />)
+          <Drawer.Navigator initialRouteName="Home"  useLegacyImplementation={true}>
+            <Drawer.Screen name="Home" component = { Home } />
+            <Drawer.Screen name="Logout" component={ Logout } />
+          </Drawer.Navigator>
         }
-      </Drawer.Navigator>
     </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#181818',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loginContainer:{
-    backgroundColor: '#121212',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%'
-  },
-  containerinfo:{
-    flexDirection: 'row',
-    backgroundColor: '#181818',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  buttonGroup:{
-      paddingTop: '15%',
-      flexDirection: 'row',
-      backgroundColor : '#121212',
-      alignItems: 'center',
-      justifyContent: 'center'
-  },
-  buttonGroupButton:{
-      border: 0,
-      shadowOffset: 0,
-  },
-  input: {
-    color: '#fff',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    height: 40,
-    width: '60%',
-    marginBottom: '3%',
-    paddingLeft: '1%'
-  },
-  loginTitle: {
-    padding: '3%',
-    color: '#fff',
-  }
-});
