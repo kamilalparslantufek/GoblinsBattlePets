@@ -5,6 +5,7 @@ import { ActivityIndicator, Text, View, Button, Image } from 'react-native';
 import { useEffect, useState, useRef } from 'react';
 import auth from '@react-native-firebase/auth'
 import styles from '../styles/styles';
+import Login from "./Login";
 
 const Home = function Home({ navigation }){
     
@@ -156,9 +157,8 @@ const Home = function Home({ navigation }){
             ? 
               <View style= {{alignItems: 'center'}}>
                 <Text style= {{color:'white'}}>Log in to learn about more pets.</Text>
-                <View style={{width: '80%'}}>
-                  
-                  <Button color='#D4AF37' title='Login' onPress={ () => navigation.navigate('Login')}></Button>
+                <View style={{width: '60%', margin:'4%'}}>
+                  <Button color='#D4AF37' title='Login' onPress={ () => navigation.navigate(Login)}></Button>
                 </View>
               </View>
             : <View style = {{alignItems: 'center'}}>

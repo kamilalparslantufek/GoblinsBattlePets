@@ -24,18 +24,27 @@ const styles = StyleSheet.create({
         paddingTop: "15%",
         flexDirection: 'row',
         backgroundColor : '#121212',
-        alignItems: 'center',
-        justifyContent: 'center'
+         alignItems: 'center',
+         justifyContent: 'center',
+        flexWrap: 'wrap',
+
     },
     buttonGroupButton:{
         border: 0,
+        padding: '1%',
+        width: '40%'
     },
     registerButton:{
-        paddingTop:"4%",
-        border:0
+        border:0,
+        width:'40%',
     },
     registerSubmit:{
         width:"100%",
+    },
+    registerForm:{
+      width:"100%",
+      alignItems: 'center',
+      justifyContent: 'center'
     },
     registerFormButton:{
         paddingLeft:"20%",
@@ -47,6 +56,24 @@ const styles = StyleSheet.create({
       borderColor: '#ddd',
       height: 40,
       width: '60%',
+      marginBottom: '3%',
+      paddingLeft: '1%'
+    },
+    registerInput:{
+      color: '#fff',
+      borderWidth: 1,
+      borderColor: '#ddd',
+      height: 40,
+      width: '100%',
+      marginBottom: '3%',
+      paddingLeft: '1%'
+    },
+    registerInput2:{
+      color: '#fff',
+      borderWidth: 1,
+      borderColor: '#ddd',
+      height: 40,
+      width: '80%',
       marginBottom: '3%',
       paddingLeft: '1%'
     },
