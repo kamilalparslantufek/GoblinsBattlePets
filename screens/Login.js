@@ -4,6 +4,7 @@ import auth from '@react-native-firebase/auth';
 import crashlytics from '@react-native-firebase/crashlytics';
 import { Text, View, Button, TextInput } from 'react-native';
 import Home from './Home'
+import List from './List';
 import Register from './Register';
 import styles from '../styles/styles'
 import { TouchableOpacity } from 'react-native-gesture-handler';
@@ -23,17 +24,16 @@ const Login = function Login({navigation}){
     const [emailTextState, setEmailState] = useState("");
     const [passwordTextState, setPasswordState] = useState("");
     const [errorStatus, setErrorState] = useState(false);
+    const [isGoogleSignInProgress, setGoogleSignInState] = useState(false);
   
     async function GoogleLogin(){
       try{
-        const services = await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true})
-        console.log(services)
+        setGoogleSignInState(true);
+        await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true})
         const result = await GoogleSignin.signIn();
-        console.log(result.idToken)
-        const credentials = auth.GoogleAuthProvider.credential(result.idToken);
-        console.log(credentials)
+        const credentials = await auth.GoogleAuthProvider.credential(result.idToken);
         await auth().signInWithCredential(credentials);
-        navigation.navigate(Home);
+        navigation.navigate(List);
       }
       catch(err){
         console.log(err)
@@ -44,27 +44,21 @@ const Login = function Login({navigation}){
     }
 
     async function EmailLogin(){
-      auth().signInWithEmailAndPassword(emailTextState,passwordTextState)
-        .then((res) => {
-          navigation.reset({
-            index:0,
-            routes: [
-                {name: 'Home'},
-                {name: 'Logout'}
-            ]
-          })
-          navigation.navigate(Home)
-        })
-        .catch((err) => {
-            setErrorState(true);
-            crashlytics().log("invalid email & password")
-            crashlytics().recordError(err)
-        });
+      try{
+        await auth().signInWithEmailAndPassword(emailTextState,passwordTextState)
+            navigation.navigate("List")
+      }  
+      catch(err)
+      {
+        setErrorState(true);
+        crashlytics().recordError(err)
+        crashlytics().log("invalid email & password")
+      }  
     }
   
     async function SendAuthCodePhone(phoneNumber){
       try{
-        const confirmation = await auth().signInWithPhoneNumber(phoneNumber);
+        const confirmation = await auth().signInWithPhoneNumber(`+${phoneNumber}`);
         setConfirmation(confirmation);
         setButtonVisibility(false);
       }
@@ -77,13 +71,11 @@ const Login = function Login({navigation}){
     async function confirmPhoneCode(){
       try{
         const res=await phoneConfirmationState.confirm(phoneConfirmCodeState);
-        console.log(res);
-        // navigation.navigate(Home);
+        navigation.navigate(List);
         // bu kısım içinde login işlemi gerçekleşiyor kod doğru girilmişse
       }
       catch(err){
         setErrorState(true);
-        console.log('invalid code.');
         crashlytics().log("invalid code entered");
         crashlytics().recordError(err);
       }
@@ -109,20 +101,35 @@ const Login = function Login({navigation}){
             onChangeText={(text) => setPasswordState(text)}>
             </TextInput>
             { errorStatus ? (<Text>Check your email & password.</Text>) : null}
-            <Button title='Login' onPress={() => { EmailLogin()}}></Button>
+            <View>
+              <Button title='Login' onPress={() => { EmailLogin()}}></Button>
+              <TouchableOpacity
+              style={{justifyContent:'space-evenly'}}
+              onPress={() => { navigation.navigate(Register)}}>
+                <Text style={{color:'#fff'}}>or you can register here.</Text>
+              </TouchableOpacity>
+            </View>
           </View>
           ) :
           (
             !phoneConfirmationState ? (
               <View key="phone" style = {styles.loginContainer}>
                 <Text style= {styles.loginTitle}>Login Using Your Phone Number</Text>
+                <Text style= {styles.loginTitle}>Enter your number with country code, without + sign.</Text>
                 <TextInput  
                 style = {styles.input}
                 placeholderTextColor = "#ddd"
                 placeholder = "Phone Number"
                 onChangeText={(text) => setPhoneNumberState(text)}>
                 </TextInput>
-              <Button title='Send Authentication Code' onPress={() => { SendAuthCodePhone(phoneNumberState)}}/>
+                <View>
+                  <Button title='Send Authentication Code' onPress={() => { SendAuthCodePhone(phoneNumberState)}}/>
+                  <TouchableOpacity
+                  style={{justifyContent:'space-evenly'}}
+                  onPress={() => { navigation.navigate(Register)}}>
+                  <Text style={{color:'#fff'}}>or you can register here.</Text>
+                  </TouchableOpacity>
+                </View>
             </View>
              ) : (
               <View key="confirmCode" style = {styles.loginContainer}>
@@ -149,13 +156,15 @@ const Login = function Login({navigation}){
                 <Button title='Phone Number' onPress={() => {setLoginMethod(1); navigation.navigate(Login);;}} ></Button>
                 </View>
               </View>
-              <View key='googleLogin'>
-                <TouchableOpacity style={{backgroundColor:'#fff', paddingHorizontal:'5%', marginTop:'5%'}} onPress={() => { GoogleLogin() }}>
-                    <Text>Login With Google</Text>
-                </TouchableOpacity>
-              </View>
-              <View key="register" style= {{ paddingTop: '5%'}}>
-                <Button style={styles.registerFormButton} title='Register' onPress={ () => { navigation.navigate(Register)} }></Button>
+              <View>
+                <Text style={{textAlign:'center', padding: '2%', color:'#fff'}}> OR </Text>
+                <GoogleSigninButton
+                style={{ width: '100%', height: 48 }}
+                size={GoogleSigninButton.Size.Wide}
+                color={GoogleSigninButton.Color.Dark}
+                disabled={isGoogleSignInProgress}
+                onPress={() => GoogleLogin()}
+                ></GoogleSigninButton>
               </View>
             </View>
           )

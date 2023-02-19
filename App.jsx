@@ -2,33 +2,45 @@ import 'react-native-gesture-handler';
 import { useEffect, useState, useRef } from 'react';
 import auth from '@react-native-firebase/auth';
 import crashlytics from '@react-native-firebase/crashlytics';
-import { ActivityIndicator, StyleSheet, Text, View, Button, TextInput, Image, VirtualizedList } from 'react-native';
+import messaging from '@react-native-firebase/messaging';
+import { PermissionsAndroid, Alert, AppRegistry } from 'react-native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { NavigationContainer, useRoute } from '@react-navigation/native';
 import Home from './screens/Home'
 import Register from './screens/Register';
 import Login from './screens/Login';
-import styles from './styles/styles'
+import List from './screens/List'
+PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
 
 function Logout({navigation}){
   auth()
   .signOut()
   .then(() => {
-    navigation.navigate(Home);
+    navigation.navigate("Home");
   })
   .catch((err) =>
   {
     crashlytics().log(`tried to logout when not logged in`);
     crashlytics().recordError(err);
-    navigation.navigate(Home);
+    navigation.navigate("Home");
   })
 }
 
 const Drawer = createDrawerNavigator();
 
 export default function App() {
-  const [currentUser, setUser] = useState();
-  const isFirstInitialization = useRef(true);
+  // useEffect(() => {
+  //   const unsubscribe = messaging().onMessage(async remoteMessage => {
+  //     console.log(remoteMessage)
+  //     Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage));
+  //   });
+  //   return unsubscribe;
+  // }, []);
+
+  // const [currentUser, setUser] = useState();
+  // const isFirstInitialization = useRef(true);
+  // this piece of code makes the main app to re render after registering and logging in, and blocks user from other actions
+  // i was using this to update the navigation options but need to find another way now
   // function onAuthStateChanged(currentUser){
   //     setUser(currentUser);
   // }
@@ -39,18 +51,13 @@ export default function App() {
 
   return (
     <NavigationContainer>
-        {currentUser == undefined ? 
           <Drawer.Navigator initialRouteName="Home"  useLegacyImplementation={true}>
               <Drawer.Screen name="Home" component = { Home } />
+              <Drawer.Screen name="List" component = { List } />
               <Drawer.Screen name="Login" component = { Login } />
               <Drawer.Screen name="Register" component = { Register } />
               <Drawer.Screen name="Logout" component={ Logout } />
-          </Drawer.Navigator>
-        :
-          <Drawer.Navigator initialRouteName="Home"  useLegacyImplementation={true}>
-            <Drawer.Screen name="Home" component = { Home } />
-          </Drawer.Navigator>
-        }
+          </Drawer.Navigator> 
     </NavigationContainer>
   );
 }

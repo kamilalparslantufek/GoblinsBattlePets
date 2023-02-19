@@ -7,13 +7,32 @@ const styles = StyleSheet.create({
       alignItems: 'center',
       justifyContent: 'center',
     },
+    listWrapper:{
+      flex:1,
+      backgroundColor: '#121212'
+    },
+    listContainer:{
+      flex: 0.95,
+      backgroundColor: '#121212',
+      color:'#fff',
+      paddingBottom:'5%'
+    },
+    listTitle:{
+      color:'#fff', fontSize:20, paddingBottom:'1%'
+    },
+    listItem:{
+      borderBottomWidth:  1,
+      borderBottomColor: '#ccc'
+    },
+    listSingleItemGroup:{flexDirection:"row", alignItems:"center", justifyContent: "center", marginTop:`8%`, marginBottom:`8%`},
     loginContainer:{
       width: '100%',
       backgroundColor: '#121212',
       alignItems: 'center',
       justifyContent: 'center',
-      paddingTop:'25%'
+      paddingTop:'25%',
     },
+    listSingleItemDetails:{flexDirection:"row", marginTop:`3%`, marginBottom:`8%`},
     containerinfo:{
       flexDirection: 'row',
       backgroundColor: '#121212',
