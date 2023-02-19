@@ -79,22 +79,29 @@ const List = function List({ navigation }){
                                     .catch((err) => {
                                         //pet creature display data
                                         console.log(`creature display`)
+                                        crashlytics().log(`creature display`)
+                                        crashlytics().recordError(err)
                                     })
                             })
                             .catch((err) => {
                                 //pet creature data
                                 console.log(`pet creature`)
+                                crashlytics().log(`pet creature`)
+                                crashlytics().recordError(err)
                             })
                     })
                     .catch((err) => {
                         //single pet data
-                        console.log(`single pet`)
+                        crashlytics().log(`single pet data`)
+                        crashlytics().recordError(err)
                     })
 
             })
             .catch((err) => {
                 //auth
                 console.log(`auth`)
+                crashlytics().log(`auth`)
+                crashlytics().recordError(err)
             })
 
     }
