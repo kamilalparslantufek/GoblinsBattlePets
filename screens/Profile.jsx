@@ -121,7 +121,7 @@ const Profile = function Profile(){
                                 </TextInput>
                                 <View >
                                     <View >
-                                        <Button title='Verify Phone Number' onPress={() => {VerifyPhone()}}></Button>
+                                        <Button title='Verify Phone Number' onPress={() => {setLoading(true);VerifyPhone()}}></Button>
                                     </View>
                                 </View>
                             </View>) 
