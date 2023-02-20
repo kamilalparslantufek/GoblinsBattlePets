@@ -14,66 +14,18 @@ GoogleSignin.configure({
  const Register = function Register({navigation}){
     const [email, setEmail] = useState();
     const [password, setPassword] = useState();
-    const [phoneNumber, setPhoneNumber] = useState();
     const [error, setErrorState] = useState(false);
     const [isLoading, setLoading] = useState(false);
-    const [phoneConfirmForm, setPhoneConfirm] = useState(false);
-    const [phoneConfirm, setConfirmation] = useState();
-    const [verificationCode, setVerificationCode] = useState();
     const [googleRegisterCredential, setGoogleRegisterCredential] = useState();
     const [emailDisabled, setEmailDisabled] = useState(false);
     const [isGoogleSignInProgress, setGoogleSignInState] = useState(false)
-    
-    //after creating the account link it with phone number
-    async function ConfirmCode(){
-        setLoading(true)
-        try{
-            const credential = auth.PhoneAuthProvider.credential(phoneConfirm.verificationId, verificationCode);
-            try{
-                await auth().currentUser.linkWithCredential(credential);
-                setLoading(false)
-                navigation.navigate('List')
-            }catch{
-                crashlytics().log(`linking error`)
-                crashlytics().recordError(err);
-                setErrorState(true)
-                setLoading(false)
-            }
-        }
-        catch(err){
-            if(err.code == 'auth/invalid-verification-code'){
-                crashlytics().log('invalid code');
-            }
-            else{
-                crashlytics().log(`linking error`)
-            }
-            crashlytics().recordError(err);
-            setErrorState(true)
-            setLoading(false)
 
-        }
-    }
-    //send phone number link verification code
-    async function VerifyPhone(){
-        setLoading(true);
-        try{
-            const confirmation = await auth().verifyPhoneNumber(`+${phoneNumber}`);
-            setConfirmation(confirmation);
-            setLoading(false);
-        }
-        catch(err){
-            crashlytics().log('verification message could not be sent.')
-            crashlytics().recordError(err);
-            setErrorState(true);
-            setLoading(false);
-        }
-    }
     //no phone linking
-    async function ContinueWithoutVerification(){
-        setPhoneConfirm(false)
-        setConfirmation(undefined)
-        navigation.navigate(List)
-    }
+    // async function ContinueWithoutVerification(){
+    //     setPhoneConfirm(false)
+    //     setConfirmation(undefined)
+    //     navigation.navigate('List')
+    // }
 
     async function CreateUser() {
         try{
@@ -83,14 +35,14 @@ GoogleSignin.configure({
             if(googleRegisterCredential != undefined){
                 try{
                     await auth().currentUser.linkWithCredential(googleRegisterCredential);
+                    setLoading(false);
+                    navigation.navigate("Profile")
                 }
                 catch(err){
                     crashlytics().log(`Account Linking Error`)
                     crashlytics().recordError(err)
                 }
             }
-            setLoading(false);
-            setPhoneConfirm(true);
             } 
         catch(err){
             crashlytics().log(`Signup Error`)
@@ -115,7 +67,7 @@ GoogleSignin.configure({
             crashlytics().recordError(err);
             setGoogleSignInState(false)
             setEmailDisabled(false)
-            navigation.navigate(Register);
+            navigation.navigate('Register');
         }
     }
 
@@ -124,11 +76,7 @@ GoogleSignin.configure({
         {isLoading
             ? (<ActivityIndicator/>)
             :  <View >
-                {phoneConfirm == undefined ? (
                     <View>
-                        {
-                            phoneConfirmForm == false ?
-                            (
                             <View style = { styles.RegisterForm}>
                                 <Text style = { styles.loginTitle }>Register Using Your Email & Password</Text>
                                 <TextInput  
@@ -158,57 +106,10 @@ GoogleSignin.configure({
                                 onPress={() => GoogleRegister()}
                                 ></GoogleSigninButton>
                             </View>
-                            )
-                            :(
-                            <View style = { styles.RegisterForm }>
-                                <Text style = { styles.loginTitle }>You can verify your phone number for signing up with your phone number.
-                                {`\n`}
-                                Enter your number with your country code without + sign.</Text>
-                                <TextInput 
-                                style = {styles.registerInput}
-                                placeholderTextColor = "#ddd"
-                                placeholder = "Phone Number"
-                                value={phoneNumber} 
-                                onChangeText={(text) => {
-                                    text = text.replace(/[^0-9]/g, '')
-                                    setPhoneNumber(text)
-                                    }}>
-                                </TextInput>
-                                <View style={styles.ButtonGroup}>
-                                    <View style={styles.buttonGroupButton}>
-                                        <Button title='Verify Phone Number' onPress={() => {VerifyPhone()}}></Button>
-                                    </View>
-                                    <View style={styles.buttonGroupButton}>
-                                        <Button title='Continue Without Number' onPress={() => {ContinueWithoutVerification()}}></Button>    
-                                    </View>
-                                </View>
-                            </View>
-                            )
-                        } 
                     </View>
-                   ) 
-                :(
-                    <View>
-                        <Text style = { styles.loginTitle }>Enter Verification Code.</Text>
-                        <TextInput 
-                        style = {styles.input}
-                        placeholderTextColor = "#ddd"
-                        placeholder = "Phone Number"
-                        inputMode='numeric'
-                        value={verificationCode} 
-                        onChangeText={(text) => {
-                            text = text.replace(/[^0-9]/g, '')
-                            setVerificationCode(text)
-                            }}>
-                        </TextInput>
-                        <Button style={styles.registerButton} title='Send' onPress={() => {ConfirmCode()}}></Button>
-                    </View>
-                )}
-            
         </View>
         }
         </View>
-       
     )
 }
 

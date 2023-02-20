@@ -33,13 +33,14 @@ const Login = function Login({navigation}){
         const result = await GoogleSignin.signIn();
         const credentials = await auth.GoogleAuthProvider.credential(result.idToken);
         await auth().signInWithCredential(credentials);
-        navigation.navigate(List);
+        navigation.navigate("List");
       }
       catch(err){
         console.log(err)
         setErrorState(true);
         crashlytics().log("could not login with google connection")
         crashlytics().recordError(err)
+        setGoogleSignInState(false)
       }
     }
 
@@ -71,7 +72,7 @@ const Login = function Login({navigation}){
     async function confirmPhoneCode(){
       try{
         const res=await phoneConfirmationState.confirm(phoneConfirmCodeState);
-        navigation.navigate(List);
+        navigation.navigate('List');
         // bu kısım içinde login işlemi gerçekleşiyor kod doğru girilmişse
       }
       catch(err){
@@ -105,7 +106,7 @@ const Login = function Login({navigation}){
               <Button title='Login' onPress={() => { EmailLogin()}}></Button>
               <TouchableOpacity
               style={{justifyContent:'space-evenly'}}
-              onPress={() => { navigation.navigate(Register)}}>
+              onPress={() => { navigation.navigate('Register')}}>
                 <Text style={{color:'#fff'}}>or you can register here.</Text>
               </TouchableOpacity>
             </View>
@@ -150,10 +151,10 @@ const Login = function Login({navigation}){
             <View>
               <View key="loginBtns" style = {styles.buttonGroup}>
                 <View style = {styles.buttonGroupButton}>
-                <Button title='Email' onPress={() => {setLoginMethod(0); navigation.navigate(Login);}}></Button>
+                <Button title='Email' onPress={() => {setLoginMethod(0); navigation.navigate('Login');}}></Button>
                 </View>
                 <View  style = {styles.buttonGroupButton}>
-                <Button title='Phone Number' onPress={() => {setLoginMethod(1); navigation.navigate(Login);;}} ></Button>
+                <Button title='Phone Number' onPress={() => {setLoginMethod(1); navigation.navigate('Login');;}} ></Button>
                 </View>
               </View>
               <View>

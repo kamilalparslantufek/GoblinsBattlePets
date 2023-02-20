@@ -10,6 +10,7 @@ import Home from './screens/Home'
 import Register from './screens/Register';
 import Login from './screens/Login';
 import List from './screens/List'
+import Profile from './screens/Profile'
 PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
 
 function Logout({navigation}){
@@ -37,27 +38,52 @@ export default function App() {
   //   return unsubscribe;
   // }, []);
 
-  // const [currentUser, setUser] = useState();
-  // const isFirstInitialization = useRef(true);
+
+  function onAuthStateChanged(currentUser){
+      setUser(currentUser);
+  }
+  useEffect(() => {
+      const sub = auth().onAuthStateChanged(onAuthStateChanged);
+      return sub;
+  })
+  const [isLoading, setLoading] = useState();
+  const [currentUser, setUser] = useState();
+  const isFirstInitialization = useRef(true);
+  const [renderRoute, setRenderRoute] = useState();
   // this piece of code makes the main app to re render after registering and logging in, and blocks user from other actions
   // i was using this to update the navigation options but need to find another way now
-  // function onAuthStateChanged(currentUser){
-  //     setUser(currentUser);
-  // }
-  // useEffect(() => {
-  //     const sub = auth().onAuthStateChanged(onAuthStateChanged);
-  //     return sub;
-  // })
+  
+ 
 
-  return (
+  return (    
     <NavigationContainer>
-          <Drawer.Navigator initialRouteName="Home"  useLegacyImplementation={true}>
-              <Drawer.Screen name="Home" component = { Home } />
-              <Drawer.Screen name="List" component = { List } />
-              <Drawer.Screen name="Login" component = { Login } />
-              <Drawer.Screen name="Register" component = { Register } />
-              <Drawer.Screen name="Logout" component={ Logout } />
-          </Drawer.Navigator> 
+      {/* <Drawer.Navigator useLegacyImplementation={true}>
+                  <Drawer.Screen name="Home" component = { Home } />
+                  <Drawer.Screen name="Login" component = { Login } />
+                  <Drawer.Screen name="Register" component = { Register } />
+                  <Drawer.Screen name="List" component = { List } />
+                  <Drawer.Screen name="Logout" component={ Logout } />
+                  <Drawer.Screen name="Profile" component={ Profile} />
+      </Drawer.Navigator> */}
+            {
+              currentUser == undefined ? (
+                <Drawer.Navigator useLegacyImplementation={true}>
+                  <Drawer.Screen name="Home" component = { Home } />
+                  <Drawer.Screen name="Login" component = { Login } />
+                  <Drawer.Screen name="List" component = { List } />
+                  <Drawer.Screen name="Register" component = { Register } />
+                </Drawer.Navigator> 
+              )
+              :
+              (
+                <Drawer.Navigator initialRouteName='Profile' useLegacyImplementation={true}>
+                  <Drawer.Screen name="Home" component = { Home } />
+                  <Drawer.Screen name="Profile" component = { Profile } />
+                  <Drawer.Screen name="List" component = { List } />
+                  <Drawer.Screen name="Logout" component={ Logout } />
+                </Drawer.Navigator>
+              )
+            }
     </NavigationContainer>
   );
 }

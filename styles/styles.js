@@ -97,7 +97,6 @@ const styles = StyleSheet.create({
       paddingLeft: '1%'
     },
     loginTitle: {
-      padding: '3%',
       color: '#fff',
     }
   });
