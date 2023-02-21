@@ -8,6 +8,8 @@ import auth from '@react-native-firebase/auth';
 import styles from '../styles/styles';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 
+
+
 const Home = function Home({navigation}) {
   const [currentUser, setUser] = useState();
   const [singlePetData, setSinglePetData] = useState([]);

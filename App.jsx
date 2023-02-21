@@ -6,12 +6,14 @@ import messaging from '@react-native-firebase/messaging';
 import { PermissionsAndroid, Alert, AppRegistry } from 'react-native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { NavigationContainer, useRoute } from '@react-navigation/native';
+import { firebase } from '@react-native-firebase/app-check';
 import Home from './screens/Home'
 import Register from './screens/Register';
 import Login from './screens/Login';
 import List from './screens/List'
 import Profile from './screens/Profile'
 PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+
 
 function Logout({navigation}){
   auth()
@@ -30,6 +32,7 @@ function Logout({navigation}){
 const Drawer = createDrawerNavigator();
 
 export default function App() {
+    
   // useEffect(() => {
   //   const unsubscribe = messaging().onMessage(async remoteMessage => {
   //     console.log(remoteMessage)

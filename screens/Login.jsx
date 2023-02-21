@@ -9,18 +9,20 @@ import Register from './Register';
 import styles from '../styles/styles'
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { GoogleSignin, GoogleSigninButton} from '@react-native-google-signin/google-signin';
+import { firebase } from '@react-native-firebase/app-check';
+import {FIREBASE_APP_CHECK_DEBUG_TOKEN} from '@env'
+
 
 GoogleSignin.configure({
   webClientId: '681058578312-c227o93h4k2l9dkdh0krb2ha76ef2ch4.apps.googleusercontent.com'
 });
 
-
 const Login = function Login({navigation}){
-    const [loginSelection, setLoginMethod] = useState(0);
+  const [loginSelection, setLoginMethod] = useState(0);
     const [isButtonsVisible, setButtonVisibility] = useState(true);
     const [phoneNumberState, setPhoneNumberState] = useState("");
     const [phoneConfirmCodeState, setConfirmCodeState] = useState("");
-    const [phoneConfirmationState, setConfirmation] = useState(null);
+    const [phoneConfirmation, setConfirmation] = useState(null);
     const [emailTextState, setEmailState] = useState("");
     const [passwordTextState, setPasswordState] = useState("");
     const [errorStatus, setErrorState] = useState(false);
@@ -46,7 +48,7 @@ const Login = function Login({navigation}){
 
     async function EmailLogin(){
       try{
-        await auth().signInWithEmailAndPassword(emailTextState,passwordTextState)
+        auth().signInWithEmailAndPassword(emailTextState,passwordTextState)
             navigation.navigate("List")
       }  
       catch(err)
@@ -59,11 +61,28 @@ const Login = function Login({navigation}){
   
     async function SendAuthCodePhone(phoneNumber){
       try{
-        const confirmation = await auth().signInWithPhoneNumber(`+${phoneNumber}`);
-        setConfirmation(confirmation);
-        setButtonVisibility(false);
-      }
+        const rnfbProvider = firebase.appCheck().newReactNativeFirebaseAppCheckProvider();
+        await rnfbProvider.configure({
+          android:{
+            provider: 'debug',
+            debugToken: FIREBASE_APP_CHECK_DEBUG_TOKEN
+          }
+        });
+        firebase.appCheck().initializeAppCheck({provider: rnfbProvider, isTokenAutoRefreshEnabled: false})
+        .then(async () => {
+          const confirmation = await auth().signInWithPhoneNumber(`+${phoneNumber}`);
+          setConfirmation(confirmation);
+          setButtonVisibility(false);  
+        })
+        .catch((err) =>{
+          console.log(err);
+          crashlytics().log("login error with phone");
+          crashlytics().recordError(err);
+        })
+        }
+
       catch(err){
+        console.log(err)
         crashlytics().log(`Invalid Phone Number.`);
         setButtonVisibility(true);
       }
@@ -71,7 +90,8 @@ const Login = function Login({navigation}){
   
     async function confirmPhoneCode(){
       try{
-        const res=await phoneConfirmationState.confirm(phoneConfirmCodeState);
+        
+        const res = await phoneConfirmation.confirm(phoneConfirmCodeState);
         navigation.navigate('List');
         // bu kısım içinde login işlemi gerçekleşiyor kod doğru girilmişse
       }
@@ -113,7 +133,7 @@ const Login = function Login({navigation}){
           </View>
           ) :
           (
-            !phoneConfirmationState ? (
+            !phoneConfirmation ? (
               <View key="phone" style = {styles.loginContainer}>
                 <Text style= {styles.loginTitle}>Login Using Your Phone Number</Text>
                 <Text style= {styles.loginTitle}>Enter your number with country code, without + sign.</Text>

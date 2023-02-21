@@ -2,13 +2,11 @@ import 'react-native-gesture-handler';
 import { useState, useEffect } from 'react';
 import auth from '@react-native-firebase/auth';
 import crashlytics from '@react-native-firebase/crashlytics';
-import { GoogleSignin, GoogleSigninButton} from '@react-native-google-signin/google-signin';
 import { ActivityIndicator, Text, View, Button, TextInput } from 'react-native';
 import styles from '../styles/styles';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import List from './List';
 
-const Profile = function Profile(){
+const Profile = function Profile({navigation}){
 
     const [confirmation, setConfirmation] = useState();
     const [phoneNumber, setPhoneNumber] = useState();
@@ -16,6 +14,7 @@ const Profile = function Profile(){
     const [currentUser, setUser] = useState();
     const [isLoading, setLoading] = useState(true);
     const [error, setErrorState] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
     const [phoneLinkState, setPhoneLinkState] = useState(false);
     const checkUserStatus = async () => {
         const user = auth().currentUser;
@@ -30,16 +29,28 @@ const Profile = function Profile(){
     async function ConfirmCode(){
         setLoading(true)
         try{
+
             const credential = auth.PhoneAuthProvider.credential(confirmation.verificationId, verificationCode);
+            console.log(5)
             try{
+                const rnfbProvider = firebase.appCheck().newReactNativeFirebaseAppCheckProvider();
+                await rnfbProvider.configure({
+                  android:{
+                    provider: 'debug',
+                    debugToken: FIREBASE_APP_CHECK_DEBUG_TOKEN
+                  }
+                });
+                await firebase.appCheck().initializeAppCheck({provider: rnfbProvider, isTokenAutoRefreshEnabled: false})
+
                 await auth().currentUser.linkWithCredential(credential);
                 setLoading(false)
                 setPhoneLinkState(true)
                 navigation.navigate('List')
-            }catch{
+            }catch(err){
                 crashlytics().log(`linking error`)
                 crashlytics().recordError(err);
                 setErrorState(true)
+                setErrorMessage(`${errorMessage} \n ${err}`)
                 setLoading(false)
             }
         }
@@ -50,6 +61,7 @@ const Profile = function Profile(){
             else{
                 crashlytics().log(`linking error`)
             }
+            setErrorMessage(`${errorMessage} \n ${err}`)
             crashlytics().recordError(err);
             setErrorState(true)
             setLoading(false)
@@ -60,25 +72,36 @@ const Profile = function Profile(){
     async function VerifyPhone(){
         setLoading(true);
         try{
-            const confirmation = await auth().verifyPhoneNumber(`+${phoneNumber}`);
-            setConfirmation(confirmation);
-            setLoading(true);
+            auth().verifyPhoneNumber(`+${phoneNumber}`)
+                .then((res) => {
+                    console.log(res)
+                    setConfirmation(confirmation);
+                    setLoading(true);
+                })
         }
         catch(err){
             crashlytics().log('verification message could not be sent.')
             crashlytics().recordError(err);
             setErrorState(true);
+            setErrorMessage(`${errorMessage} \n ${err}`)
             setLoading(false);
         }
     }
     useEffect(() => {
         setLoading(true)
         checkUserStatus()
-    })
+    }, [])
 
     return(
     <View style={{flex:1, backgroundColor: '#121212'}}>
-        {isLoading?( <ActivityIndicator/>) : ( 
+        {isLoading ? 
+        ( 
+        <View>
+            <ActivityIndicator/>
+        </View>
+        ) 
+        : 
+        ( 
             <View style = {{ marginHorizontal: '10%', marginVertical: '2%'}}>
                 <View>
                     <View style = {{marginBottom:'5%'}}>
@@ -92,7 +115,7 @@ const Profile = function Profile(){
                     <Text style={{color:'white'}}>{currentUser.email}</Text>
                 </View>
                 <View>
-                    {error ? (<Text style={{color:"white"}}>An error has been occured.</Text>) : (null)}
+                    {error ? (<Text style={{color:"white"}}>{errorMessage}</Text>) : (null)}
                 </View>
                 <View>
                     {phoneLinkState==false? (
@@ -119,9 +142,9 @@ const Profile = function Profile(){
                                     setPhoneNumber(text)
                                 }}>
                                 </TextInput>
-                                <View >
-                                    <View >
-                                        <Button title='Verify Phone Number' onPress={() => {setLoading(true);VerifyPhone()}}></Button>
+                                <View>
+                                    <View>
+                                        <Button title='Verify Phone Number' onPress={() => {VerifyPhone()}}></Button>
                                     </View>
                                 </View>
                             </View>) 
