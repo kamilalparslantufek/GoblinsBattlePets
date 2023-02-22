@@ -1,12 +1,14 @@
 import 'react-native-gesture-handler';
 import { useState } from 'react';
-import auth from '@react-native-firebase/auth';
+import { firebase } from '@react-native-firebase/auth';
 import crashlytics from '@react-native-firebase/crashlytics';
 import { GoogleSignin, GoogleSigninButton} from '@react-native-google-signin/google-signin';
 import { ActivityIndicator, Text, View, Button, TextInput, Image } from 'react-native';
 import styles from '../styles/styles';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import List from './List';
+import auth from '@react-native-firebase/auth'
+import { authenticateWithPhone, confirmPhoneCode, googleSigninLogin, googleSigninRegister, loginWithEmailPassword, registerWithEmailPassword } from '../core/modules/firebase_auth';
 GoogleSignin.configure({
     webClientId: '681058578312-c227o93h4k2l9dkdh0krb2ha76ef2ch4.apps.googleusercontent.com'
 });
@@ -17,30 +19,17 @@ GoogleSignin.configure({
     const [phoneNumber, setPhoneNumber] = useState();
     const [error, setErrorState] = useState(false);
     const [isLoading, setLoading] = useState(false);
-    const [googleRegisterCredential, setGoogleRegisterCredential] = useState();
-    const [emailDisabled, setEmailDisabled] = useState(false);
-    const [isGoogleSignInProgress, setGoogleSignInState] = useState(false)
     const [registerMethod, setRegisterMethod] = useState(0)
     const [isButtonsVisible, setButtonVisibility] = useState(true)
-    const [phoneConfirmation, setConfirmation] = useState()
+    const [confirmation, setConfirmation] = useState()
+    const [confirmCode, setConfirmCode] = useState()
     
     async function CreateUser() {
         try{
             setLoading(true)
-            await auth().createUserWithEmailAndPassword(email,password);
-            //if chosen method is the google verification, link account with google account
-            if(googleRegisterCredential != undefined){
-                try{
-                    await auth().currentUser.linkWithCredential(googleRegisterCredential);
-                    setLoading(false);
-                    navigation.navigate("Profile")
-                }
-                catch(err){
-                    crashlytics().log(`Account Linking Error`)
-                    crashlytics().recordError(err)
-                }
-            }
-            } 
+            await registerWithEmailPassword(email, password);
+            navigation.navigate('Profile');
+        } 
         catch(err){
             crashlytics().log(`Signup Error`)
             crashlytics().recordError(err)
@@ -51,29 +40,24 @@ GoogleSignin.configure({
 
     async function GoogleRegister(){
         try{
-            await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true})
-            const result = await GoogleSignin.signIn();
-            const credentials = auth.GoogleAuthProvider.credential(result.idToken);
-            setGoogleRegisterCredential(credentials)
-            setEmail(result.user.email)
-            setEmailDisabled(true)
-            setGoogleSignInState(true)
+            const credentials = await googleSigninLogin();
+            await auth().signInWithCredential(credentials);
+            navigation.navigate('Home');
         }
         catch(err){
-            crashlytics().log(`Could not create credential of the user.`);
+            console.log(err);
+            crashlytics().log(err.message);
             crashlytics().recordError(err);
-            setGoogleSignInState(false)
-            setEmailDisabled(false)
-            navigation.navigate('Register');
         }
     }
     //phone
     async function VerifyPhone(){
         setLoading(true);
         try{
-            const confirmation = await auth().verifyPhoneNumber(`+${phoneNumber}`);
+            const confirmation = await authenticateWithPhone(phoneNumber);
             setConfirmation(confirmation);
-            setLoading(true);
+            setLoading(false);
+            setButtonVisibility(false);
         }
         catch(err){
             crashlytics().log('verification message could not be sent.')
@@ -82,36 +66,20 @@ GoogleSignin.configure({
             setLoading(false);
         }
     }
-    
-    async function ConfirmCode(){
-        setLoading(true)
+    async function phoneConfirmCode(){
         try{
-            const credential = auth.PhoneAuthProvider.credential(confirmation.verificationId, verificationCode);
-            try{
-                await auth().currentUser.linkWithCredential(credential);
-                setLoading(false)
-                setPhoneLinkState(true)
-                navigation.navigate('List')
-            }catch{
-                crashlytics().log(`linking error`)
-                crashlytics().recordError(err);
-                setErrorState(true)
-                setLoading(false)
-            }
+            // bu kısım içinde login işlemi gerçekleşiyor kod doğru girilmişse
+            const res = confirmPhoneCode(confirmCode,confirmation);
+            navigation.navigate('List');
         }
         catch(err){
-            if(err.code == 'auth/invalid-verification-code'){
-                crashlytics().log('invalid code');
-            }
-            else{
-                crashlytics().log(`linking error`)
-            }
-            crashlytics().recordError(err);
-            setErrorState(true)
-            setLoading(false)
-
+          setErrorState(true);
+          crashlytics().log(err.message);
+          crashlytics().recordError(err);
         }
     }
+
+
     return (
         <View style={ styles.container }>
         {isLoading
@@ -128,8 +96,6 @@ GoogleSignin.configure({
                                 placeholder = "Email"
                                 inputMode='email'
                                 value={email}
-                                editable={!emailDisabled}
-                                selectTextOnFocus={!emailDisabled}
                                 onChangeText={(text) => setEmail(text)}>
                                 </TextInput>
                                 <TextInput 
@@ -140,14 +106,57 @@ GoogleSignin.configure({
                                 onChangeText={(text) => setPassword(text)}>
                                 </TextInput>
                                 <Button style={styles.registerButton} title='Register' onPress={() => {CreateUser()}}></Button>
-                                <Text style={{textAlign:'center', padding: '2%', color:'#fff'}}> OR </Text>
+                             
+                            </View>
+                        )
+                        :
+                        (
+                            (!confirmation ? 
+                            (
+                            <View key="phone" style = {[styles.RegisterForm]}>
+                                <View style = {{marginBottom: '2%', alignItems:'center', justifyContent:'center'}}>
+                                    <Text style= {styles.loginTitle}>Register Using Your Phone Number</Text>
+                                    <Text style= {[styles.loginTitle, {fontSize:12}]}>Enter your number with country code, without + sign.</Text>
+                                </View>
+                                <TextInput  
+                                style = {styles.registerInput}
+                                placeholderTextColor = "#ddd"
+                                placeholder = "Phone Number"
+                                keyboardType='numeric'
+                                onChangeText={(text) => setPhoneNumber(text)}>
+                                </TextInput>
+                                <View style= {{alignItems:'center'}}>
+                                    <Button title='Send Authentication Code' onPress={() => { VerifyPhone()}}/>
+                                </View>
+                            </View>
+                            ) : (
+                            <View key="confirmCode" style = {styles.loginContainer}>
+                                <Text style= {styles.loginTitle}>Enter your 6 digit code below.</Text>
+                                <TextInput
+                                style = {styles.input}
+                                placeholderTextColor = "#ddd"
+                                placeholder = ""
+                                onChangeText={(text) => {
+                                    text = text.replace(/[^0-9]/g, '')
+                                    setConfirmCode(text)}}
+                                ></TextInput>
+                                <Button title='Confirm Code' onPress={()=> {phoneConfirmCode()}}></Button>
+                            </View>
+                                 )
+                              )
+                        )}
+                        {isButtonsVisible?
+                        (<View style ={{marginTop: '5%'}}>
+                            <Text style={{textAlign:'center', padding: '2%', color:'#fff'}}> OR </Text>
+                            <View style = {{alignItems:'center', justifyContent:'center'}}>
                                 <TouchableOpacity onPress={() => {GoogleRegister()}}>
-                                    <View style = {{backgroundColor: '#0066ff', borderRadius: 3, flexDirection: 'row', alignItems:'center'}}>
+                                    <View style = {{backgroundColor: '#2196f3', borderRadius: 3, flexDirection: 'row', alignItems:'center', justifyContent:'space-between', paddingRight:'3%'}}>
                                         <Image
                                         style = {{
                                             width: 40,
                                             height: 40,
-                                            marginRight: '10%'
+                                            backgroundColor: 'white',
+                                            marginRight:'3%'
                                         }}
                                         source= {{uri : "https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png"}}
                                         />
@@ -155,56 +164,22 @@ GoogleSignin.configure({
                                     </View>
                                 </TouchableOpacity>
                             </View>
-                        )
-                        :(
-                            (
-                                !phoneConfirmation ? (
-                                  <View key="phone" style = {styles.loginContainer}>
-                                    <Text style= {styles.loginTitle}>Login Using Your Phone Number</Text>
-                                    <Text style= {styles.loginTitle}>Enter your number with country code, without + sign.</Text>
-                                    <TextInput  
-                                    style = {styles.input}
-                                    placeholderTextColor = "#ddd"
-                                    placeholder = "Phone Number"
-                                    onChangeText={(text) => setPhoneNumberState(text)}>
-                                    </TextInput>
-                                    <View>
-                                      <Button title='Send Authentication Code' onPress={() => { SendAuthCodePhone(phoneNumberState)}}/>
-                                      <TouchableOpacity
-                                      style={{justifyContent:'space-evenly'}}
-                                      onPress={() => { navigation.navigate(Register)}}>
-                                      <Text style={{color:'#fff'}}>or you can register here.</Text>
-                                      </TouchableOpacity>
-                                    </View>
-                                </View>
-                                 ) : (
-                                  <View key="confirmCode" style = {styles.loginContainer}>
-                                    <Text style= {styles.loginTitle}>Enter your 6 digit code below.</Text>
-                                    <TextInput
-                                    style = {styles.input}
-                                    placeholderTextColor = "#ddd"
-                                    placeholder = ""
-                                    onChangeText={text => setConfirmCodeState(text)}
-                                    ></TextInput>
-                                    <Button title='Confirm Code' onPress={()=> confirmPhoneCode()}></Button>
-                                  </View>
-                                 )
-                              )
-                        )}
-                        {isButtonsVisible?
-                        (<View style ={{marginTop: '5%'}}>
                             <View style = {{justifyContent: 'center', alignItems:'center'}}>
-                                <Text style = {{color:'white'}}> Sign up with</Text>
+                                <View style = {{flexDirection:'row', alignItems:'center', width:'50%', paddingTop:'1%'}}>
+                                    <View style={{flex:1, height:1, backgroundColor:'#aaa'}}></View>
+                                    <Text style = {{color:'white', textTransform:'uppercase', marginHorizontal:'1%'}}>OR Sign up with</Text>
+                                    <View style={{flex:1, height:1, backgroundColor:'#aaa'}}></View>
+                                </View>
                             </View>
-                            <View style = {{marginTop: '0.5%', flexDirection: 'row', justifyContent:'space-evenly'}}>
-                                <TouchableOpacity onPress={() => {setRegisterMethod(0)}}>
-                                    <View>
-                                        <Text style= {{color:'#fff',borderWidth:1, backgroundColor:'#0066ff' ,borderColor:'#0066ff',borderRadius:3, padding:'0.5%'}}>with Email</Text>
+                            <View style = {{marginTop: '0.5%', flexDirection: 'row', alignItems:'center', justifyContent:'space-around'}}>
+                                <TouchableOpacity  onPress={() => {setRegisterMethod(0)}}>
+                                    <View style = {{alignItems:'center', justifyContent:'center'}}>
+                                        <Text style= {{color:'#fff',borderWidth:1, backgroundColor:'#2196f3' ,borderColor:'#2196f3',borderRadius:3, paddingHorizontal:'3%', paddingVertical:'1%'}}>Email</Text>
                                     </View>
                                 </TouchableOpacity>
                                 <TouchableOpacity onPress={() => {setRegisterMethod(1)}}>
-                                    <View>
-                                        <Text style= {{color:'#fff',borderWidth:1,  backgroundColor:'#0066ff' ,borderColor:'#0066ff',borderRadius:3, padding: '0.5%'}}>with Phone</Text>
+                                    <View style = {{alignItems:'center', justifyContent:'center'}}>
+                                        <Text style= {{color:'#fff',borderWidth:1,  backgroundColor:'#2196f3' ,borderColor:'#2196f3',borderRadius:3, paddingHorizontal: '3%', paddingVertical:'1%'}}>Phone</Text>
                                     </View>
                                 </TouchableOpacity>
                             </View>

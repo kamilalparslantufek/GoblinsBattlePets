@@ -6,11 +6,12 @@ import { Text, View, Button, TextInput } from 'react-native';
 import Home from './Home'
 import List from './List';
 import Register from './Register';
-import styles from '../styles/styles'
+import styles from '../styles/styles';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { GoogleSignin, GoogleSigninButton} from '@react-native-google-signin/google-signin';
 import { firebase } from '@react-native-firebase/app-check';
 import {FIREBASE_APP_CHECK_DEBUG_TOKEN} from '@env'
+import { loginWithEmailPassword, googleSigninLogin }  from '../core/modules/firebase_auth';
 
 
 GoogleSignin.configure({
@@ -20,20 +21,21 @@ GoogleSignin.configure({
 const Login = function Login({navigation}){
   const [loginSelection, setLoginMethod] = useState(0);
     const [isButtonsVisible, setButtonVisibility] = useState(true);
+    //phone number
     const [phoneNumberState, setPhoneNumberState] = useState("");
     const [phoneConfirmCodeState, setConfirmCodeState] = useState("");
     const [phoneConfirmation, setConfirmation] = useState(null);
+    
     const [emailTextState, setEmailState] = useState("");
     const [passwordTextState, setPasswordState] = useState("");
     const [errorStatus, setErrorState] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
     const [isGoogleSignInProgress, setGoogleSignInState] = useState(false);
   
     async function GoogleLogin(){
       try{
         setGoogleSignInState(true);
-        await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true})
-        const result = await GoogleSignin.signIn();
-        const credentials = await auth.GoogleAuthProvider.credential(result.idToken);
+        const credentials = await googleSigninLogin();
         await auth().signInWithCredential(credentials);
         navigation.navigate("List");
       }
@@ -48,14 +50,19 @@ const Login = function Login({navigation}){
 
     async function EmailLogin(){
       try{
-        auth().signInWithEmailAndPassword(emailTextState,passwordTextState)
-            navigation.navigate("List")
+        await loginWithEmailPassword(emailTextState, passwordTextState)
+        navigation.navigate("List")
       }  
       catch(err)
       {
+        console.log(JSON.stringify(err, Object.getOwnPropertyNames(err)));
         setErrorState(true);
+        crashlytics().log(err.message)
         crashlytics().recordError(err)
-        crashlytics().log("invalid email & password")
+
+        if(err.message.includes("[auth/invalid-email]"))
+          setErrorMessage("You have entered an invalid email.")
+        
       }  
     }
   
@@ -69,18 +76,10 @@ const Login = function Login({navigation}){
           }
         });
         firebase.appCheck().initializeAppCheck({provider: rnfbProvider, isTokenAutoRefreshEnabled: false})
-        .then(async () => {
-          const confirmation = await auth().signInWithPhoneNumber(`+${phoneNumber}`);
-          setConfirmation(confirmation);
-          setButtonVisibility(false);  
-        })
-        .catch((err) =>{
-          console.log(err);
-          crashlytics().log("login error with phone");
-          crashlytics().recordError(err);
-        })
+        const confirmation = await auth().signInWithPhoneNumber(`+${phoneNumber}`, true);
+        setConfirmation(confirmation);
+        setButtonVisibility(false);  
         }
-
       catch(err){
         console.log(err)
         crashlytics().log(`Invalid Phone Number.`);
@@ -96,6 +95,7 @@ const Login = function Login({navigation}){
         // bu kısım içinde login işlemi gerçekleşiyor kod doğru girilmişse
       }
       catch(err){
+        console.log(err.code)
         setErrorState(true);
         crashlytics().log("invalid code entered");
         crashlytics().recordError(err);

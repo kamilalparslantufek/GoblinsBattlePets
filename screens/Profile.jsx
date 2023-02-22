@@ -5,26 +5,68 @@ import crashlytics from '@react-native-firebase/crashlytics';
 import { ActivityIndicator, Text, View, Button, TextInput } from 'react-native';
 import styles from '../styles/styles';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import { linkWithEmail } from '../core/modules/firebase_auth';
 
 const Profile = function Profile({navigation}){
 
-    const [confirmation, setConfirmation] = useState();
-    const [phoneNumber, setPhoneNumber] = useState();
-    const [verificationCode, setVerificationCode] = useState();
-    const [currentUser, setUser] = useState();
+    //
     const [isLoading, setLoading] = useState(true);
+    const [currentUser, setUser] = useState();
     const [error, setErrorState] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
+    //google & email verification
+    const [email, setEmail] = useState();
+    const [isEmailEnabled, setEmailEnabled] = useState();
+    const [isEmailVerificationSent, setEmailVerificationSent] = useState();
+    const [isGoogleEnabled, setGoogleEnabled] = useState();
+    //phone number related
+    const [phoneNumber, setPhoneNumber] = useState();
     const [phoneLinkState, setPhoneLinkState] = useState(false);
+    const [confirmation, setConfirmation] = useState();
+    const [verificationCode, setVerificationCode] = useState();
+    //
+    
     const checkUserStatus = async () => {
         const user = auth().currentUser;
         setUser(user);
-        if(user.phoneNumber != undefined){
-            setPhoneLinkState(true)
+        if(user.email != undefined){
+            console.log(user);
         }
+        else{
+            console.log(user);
+        }
+        // if(user.email){
+        //     console.log(user);
+        //     try{
+        //         const methods = await auth().fetchSignInMethodsForEmail(user.email);
+        //         methods.includes("google.com") ? (setGoogleEnabled(true)) : (setGoogleEnabled(false));
+        //         if(methods.includes("phone")) 
+        //         {
+        //             setPhoneLinkState(true);
+        //             setPhoneNumber(user.phoneNumber);
+        //         }
+        //         else
+        //             setPhoneLinkState(false);
+        //         }
+        //         catch(err){
+        //             console.log(err);
+        //         }
+        //     }
+        // else{
+        //     isEmailEnabled(false);
+        // }
         setLoading(false)
     };
-    
+    async function updateEmail(){
+        try{
+            await linkWithEmail(auth().currentUser,email);
+        }
+        catch(err){
+            console.log(err);
+            crashlytics().log(err.message);
+            crashlytics().recordError(err);   
+        }
+    }
     //after creating the account link it with phone number
     async function ConfirmCode(){
         setLoading(true)
@@ -41,10 +83,9 @@ const Profile = function Profile({navigation}){
                   }
                 });
                 await firebase.appCheck().initializeAppCheck({provider: rnfbProvider, isTokenAutoRefreshEnabled: false})
-
                 await auth().currentUser.linkWithCredential(credential);
-                setLoading(false)
-                setPhoneLinkState(true)
+                setLoading(false);
+                setPhoneLinkState(true);
                 navigation.navigate('List')
             }catch(err){
                 crashlytics().log(`linking error`)
@@ -80,7 +121,7 @@ const Profile = function Profile({navigation}){
                 })
         }
         catch(err){
-            crashlytics().log('verification message could not be sent.')
+            crashlytics().log(err.message);
             crashlytics().recordError(err);
             setErrorState(true);
             setErrorMessage(`${errorMessage} \n ${err}`)
@@ -103,6 +144,7 @@ const Profile = function Profile({navigation}){
         : 
         ( 
             <View style = {{ marginHorizontal: '10%', marginVertical: '2%'}}>
+                {/* header */}
                 <View>
                     <View style = {{marginBottom:'5%'}}>
                         <Text style={{color:'white', fontSize:20}}>User Profile</Text>
@@ -111,8 +153,52 @@ const Profile = function Profile({navigation}){
                             <View style={{flex:1, height:1, backgroundColor:'#aaa'}}></View>
                         </View>
                     </View>
-                    <Text style={{color:'#aaa'}}>User</Text>
-                    <Text style={{color:'white'}}>{currentUser.email}</Text>
+                </View>
+                <View>
+                    {isEmailEnabled? 
+                    (
+                        <View>
+                            <Text style={{color:'#aaa'}}>User</Text>
+                            <Text style={{color:'white'}}>{currentUser.email}</Text>
+                        </View>
+                    )
+                    :(
+                        <View>
+                            {isEmailVerificationSent? (
+                                <View>
+                                    <Text style={{color:'#fff'}}>Check your email for verification mail.</Text>
+                                </View>
+                            )
+                            : (
+                                <View>
+                                    <Text style={{color:'#aaa'}}>You can add and verify your email here.</Text>
+                                    <TextInput
+                                    value = {email}
+                                    onPress={(text) => {setEmail(text)}}
+                                    style = {{ color: '#fff',
+                                        borderWidth: 1,
+                                        borderColor: '#ddd',
+                                        height: 40,
+                                        width: '100%',
+                                        marginTop: "2%",
+                                        marginBottom: '3%',
+                                        paddingLeft: '1%'}}
+                                    placeholderTextColor = "#ddd"
+                                    placeholder = "Enter your email here"
+                                    >
+                                    </TextInput>
+                                    <TouchableOpacity
+                                    onPress={() => {updateEmail()}}>
+                                        <View>
+                                            <Text style={{color:'#fff'}}>UPDATE EMAIL</Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                         
+                        </View>
+                    )}
+
                 </View>
                 <View>
                     {error ? (<Text style={{color:"white"}}>{errorMessage}</Text>) : (null)}
