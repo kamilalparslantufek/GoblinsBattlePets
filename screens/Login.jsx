@@ -68,14 +68,14 @@ const Login = function Login({navigation}){
   
     async function SendAuthCodePhone(phoneNumber){
       try{
-        const rnfbProvider = firebase.appCheck().newReactNativeFirebaseAppCheckProvider();
-        await rnfbProvider.configure({
-          android:{
-            provider: 'debug',
-            debugToken: FIREBASE_APP_CHECK_DEBUG_TOKEN
-          }
-        });
-        firebase.appCheck().initializeAppCheck({provider: rnfbProvider, isTokenAutoRefreshEnabled: false})
+        // const rnfbProvider = firebase.appCheck().newReactNativeFirebaseAppCheckProvider();
+        // await rnfbProvider.configure({
+        //   android:{
+        //     provider: 'debug',
+        //     debugToken: FIREBASE_APP_CHECK_DEBUG_TOKEN
+        //   }
+        // });
+        // firebase.appCheck().initializeAppCheck({provider: rnfbProvider, isTokenAutoRefreshEnabled: false})
         const confirmation = await auth().signInWithPhoneNumber(`+${phoneNumber}`, true);
         setConfirmation(confirmation);
         setButtonVisibility(false);  
@@ -107,7 +107,7 @@ const Login = function Login({navigation}){
           loginSelection == 0 ? 
           (
             <View key="email" style = {styles.loginContainer}>
-            <Text style = { styles.loginTitle}>Login Using Your Email & Password</Text>
+            <Text style = { styles.loginTitle }>Login Using Your Email & Password</Text>
             <TextInput  
             style = {styles.input}
             placeholderTextColor = "#ddd"

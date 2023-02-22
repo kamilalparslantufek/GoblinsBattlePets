@@ -18,6 +18,7 @@ const Profile = function Profile({navigation}){
     const [email, setEmail] = useState();
     const [isEmailEnabled, setEmailEnabled] = useState();
     const [isEmailVerificationSent, setEmailVerificationSent] = useState();
+    const [isEmailVerified, setEmailVerified] = useState();
     const [isGoogleEnabled, setGoogleEnabled] = useState();
     //phone number related
     const [phoneNumber, setPhoneNumber] = useState();
@@ -28,38 +29,35 @@ const Profile = function Profile({navigation}){
     
     const checkUserStatus = async () => {
         const user = auth().currentUser;
+        console.log(user)
         setUser(user);
-        if(user.email != undefined){
-            console.log(user);
+        if(user.phoneNumber != undefined){
+            setPhoneLinkState(true)
+            setPhoneNumber(user.phoneNumber)
         }
         else{
-            console.log(user);
+            setPhoneLinkState(false)
         }
-        // if(user.email){
-        //     console.log(user);
-        //     try{
-        //         const methods = await auth().fetchSignInMethodsForEmail(user.email);
-        //         methods.includes("google.com") ? (setGoogleEnabled(true)) : (setGoogleEnabled(false));
-        //         if(methods.includes("phone")) 
-        //         {
-        //             setPhoneLinkState(true);
-        //             setPhoneNumber(user.phoneNumber);
-        //         }
-        //         else
-        //             setPhoneLinkState(false);
-        //         }
-        //         catch(err){
-        //             console.log(err);
-        //         }
-        //     }
-        // else{
-        //     isEmailEnabled(false);
-        // }
+        user.emailVerified? setEmailVerified(true) : setEmailVerified(false);
+        if(user.email != undefined){
+            try{
+                const methods = await auth().fetchSignInMethodsForEmail(user.email);
+                methods.includes("google.com") ? (setGoogleEnabled(true)) : (setGoogleEnabled(false));
+            }
+            catch(err){
+                console.log(err);
+                }
+        }
+        else{
+            setEmailEnabled(false);
+        }
         setLoading(false)
     };
     async function updateEmail(){
         try{
+            console.log(email)
             await linkWithEmail(auth().currentUser,email);
+            checkUserStatus();
         }
         catch(err){
             console.log(err);
@@ -160,7 +158,22 @@ const Profile = function Profile({navigation}){
                         <View>
                             <Text style={{color:'#aaa'}}>User</Text>
                             <Text style={{color:'white'}}>{currentUser.email}</Text>
+                            {isEmailVerified?
+                            (null) : (
+                                <View>
+                                    <TouchableOpacity>
+                                        <View>
+                                            <Text>Click here to verify your email.</Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                    {isEmailVerificationSent ?
+                                    (
+                                        <Text>Check your email!</Text>
+                                    ) : (null)}
+                                </View>
+                            )}
                         </View>
+
                     )
                     :(
                         <View>
@@ -174,7 +187,7 @@ const Profile = function Profile({navigation}){
                                     <Text style={{color:'#aaa'}}>You can add and verify your email here.</Text>
                                     <TextInput
                                     value = {email}
-                                    onPress={(text) => {setEmail(text)}}
+                                    onChangeText={(text) => {setEmail(text)}}
                                     style = {{ color: '#fff',
                                         borderWidth: 1,
                                         borderColor: '#ddd',

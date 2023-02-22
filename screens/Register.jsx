@@ -1,17 +1,11 @@
 import 'react-native-gesture-handler';
 import { useState } from 'react';
-import { firebase } from '@react-native-firebase/auth';
 import crashlytics from '@react-native-firebase/crashlytics';
-import { GoogleSignin, GoogleSigninButton} from '@react-native-google-signin/google-signin';
 import { ActivityIndicator, Text, View, Button, TextInput, Image } from 'react-native';
 import styles from '../styles/styles';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import List from './List';
 import auth from '@react-native-firebase/auth'
-import { authenticateWithPhone, confirmPhoneCode, googleSigninLogin, googleSigninRegister, loginWithEmailPassword, registerWithEmailPassword } from '../core/modules/firebase_auth';
-GoogleSignin.configure({
-    webClientId: '681058578312-c227o93h4k2l9dkdh0krb2ha76ef2ch4.apps.googleusercontent.com'
-});
+import { authenticateWithPhone, confirmPhoneCode, googleSigninLogin, registerWithEmailPassword } from '../core/modules/firebase_auth';
 
  const Register = function Register({navigation}){
     const [email, setEmail] = useState();
@@ -31,6 +25,7 @@ GoogleSignin.configure({
             navigation.navigate('Profile');
         } 
         catch(err){
+            console.log(err)
             crashlytics().log(`Signup Error`)
             crashlytics().recordError(err)
             setErrorState(true);

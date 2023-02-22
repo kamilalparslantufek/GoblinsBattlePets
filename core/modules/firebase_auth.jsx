@@ -96,8 +96,18 @@ const googleSigninLogin = async() => {
 const linkWithEmail = async(user, email) => {
     try{
         await user.updateEmail(email);
-        await user.sendEmailVerification({handleCodeInApp: false});
+        // await user.sendEmailVerification({handleCodeInApp: false});
     }
+    catch(err){
+        throw new Error(err.message);
+    }
+}
+
+const sendEmailVerification = async(user) => {
+    try{
+        //methodda bir sıkıntı var yarın düzelt
+        await auth().currentUser.sendEmailVerification({handleCodeInApp: false});
+    }    
     catch(err){
         throw new Error(err.message);
     }
