@@ -40,6 +40,8 @@ const Profile = function Profile({navigation}){
         }
         user.emailVerified? setEmailVerified(true) : setEmailVerified(false);
         if(user.email != undefined){
+            setEmail(user.email);
+            setEmailEnabled(true)
             try{
                 const methods = await auth().fetchSignInMethodsForEmail(user.email);
                 methods.includes("google.com") ? (setGoogleEnabled(true)) : (setGoogleEnabled(false));
@@ -63,6 +65,7 @@ const Profile = function Profile({navigation}){
             console.log(err);
             crashlytics().log(err.message);
             crashlytics().recordError(err);   
+            checkUserStatus();
         }
     }
     //after creating the account link it with phone number
@@ -163,7 +166,7 @@ const Profile = function Profile({navigation}){
                                 <View>
                                     <TouchableOpacity>
                                         <View>
-                                            <Text>Click here to verify your email.</Text>
+                                            <Text style={{color:'#fff'}}>Click here to verify your email.[NOT IMPLEMENTED]</Text>
                                         </View>
                                     </TouchableOpacity>
                                     {isEmailVerificationSent ?
