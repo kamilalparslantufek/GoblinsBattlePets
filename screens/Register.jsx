@@ -4,8 +4,8 @@ import crashlytics from '@react-native-firebase/crashlytics';
 import { ActivityIndicator, Text, View, Button, TextInput, Image } from 'react-native';
 import styles from '../styles/styles';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import auth from '@react-native-firebase/auth'
-import { authenticateWithPhone, confirmPhoneCode, googleSigninLogin, registerWithEmailPassword } from '../core/modules/firebase_auth';
+import auth from '@react-native-firebase/auth';
+import { authenticateWithPhone, confirmPhoneCode, googleSignInRegister, registerWithEmailPassword } from '../core/modules/firebase';
 
  const Register = function Register({navigation}){
     const [email, setEmail] = useState();
@@ -13,15 +13,22 @@ import { authenticateWithPhone, confirmPhoneCode, googleSigninLogin, registerWit
     const [phoneNumber, setPhoneNumber] = useState();
     const [error, setErrorState] = useState(false);
     const [isLoading, setLoading] = useState(false);
-    const [registerMethod, setRegisterMethod] = useState(0)
-    const [isButtonsVisible, setButtonVisibility] = useState(true)
-    const [confirmation, setConfirmation] = useState()
-    const [confirmCode, setConfirmCode] = useState()
-    
+    const [registerMethod, setRegisterMethod] = useState(0);
+    const [isButtonsVisible, setButtonVisibility] = useState(true);
+    //phone
+    const [confirmation, setConfirmation] = useState();
+    const [confirmCode, setConfirmCode] = useState();
+    //google
+    const [googleRegisterOnProgress, setGoogleRegisterProgress] = useState(false);
+    const [googleCredentials, setGoogleCredentials] = useState();
+    //email
     async function CreateUser() {
         try{
             setLoading(true)
             await registerWithEmailPassword(email, password);
+            if(googleRegisterOnProgress){
+                await auth().currentUser.linkWithCredential(googleCredentials.credentials)
+            }
             navigation.navigate('Profile');
         } 
         catch(err){
@@ -32,14 +39,16 @@ import { authenticateWithPhone, confirmPhoneCode, googleSigninLogin, registerWit
             setLoading(false);
         }
     }
-
+    //google
     async function GoogleRegister(){
         try{
-            const credentials = await googleSigninLogin();
-            await auth().signInWithCredential(credentials);
-            navigation.navigate('Home');
+            setGoogleRegisterProgress(true)
+            const credentials = await googleSignInRegister();
+            setGoogleCredentials(credentials)
+            setEmail(credentials.result.user.email)
         }
         catch(err){
+            setGoogleRegisterProgress(false);
             console.log(err);
             crashlytics().log(err.message);
             crashlytics().recordError(err);
@@ -91,6 +100,8 @@ import { authenticateWithPhone, confirmPhoneCode, googleSigninLogin, registerWit
                                 placeholder = "Email"
                                 inputMode='email'
                                 value={email}
+                                editable={!googleRegisterOnProgress}
+                                selectTextOnFocus={!googleRegisterOnProgress}
                                 onChangeText={(text) => setEmail(text)}>
                                 </TextInput>
                                 <TextInput 
@@ -144,13 +155,15 @@ import { authenticateWithPhone, confirmPhoneCode, googleSigninLogin, registerWit
                         (<View style ={{marginTop: '5%'}}>
                             <Text style={{textAlign:'center', padding: '2%', color:'#fff'}}> OR </Text>
                             <View style = {{alignItems:'center', justifyContent:'center'}}>
-                                <TouchableOpacity onPress={() => {GoogleRegister()}}>
-                                    <View style = {{backgroundColor: '#2196f3', borderRadius: 3, flexDirection: 'row', alignItems:'center', justifyContent:'space-between', paddingRight:'3%'}}>
+                                <TouchableOpacity 
+                                disabled = {googleRegisterOnProgress}
+                                onPress={() => {GoogleRegister()}}>
+                                    <View style = {[{backgroundColor: !googleRegisterOnProgress? '#2196f3' : '#ebebeb'}, { borderRadius: 3, flexDirection: 'row', alignItems:'center', justifyContent:'space-between', paddingRight:'3%'}]}>
                                         <Image
                                         style = {{
                                             width: 40,
                                             height: 40,
-                                            backgroundColor: 'white',
+                                            backgroundColor: !googleRegisterOnProgress?'white' : '#ebebeb',
                                             marginRight:'3%'
                                         }}
                                         source= {{uri : "https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png"}}

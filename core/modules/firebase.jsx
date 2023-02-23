@@ -67,23 +67,12 @@ const getSignInResult = async() => {
     }
 }
 
-
-const googleSigninRegister = async() => {
-    try{
-        const signInResult = await getSignInResult();
-        const credentials = await auth.GoogleAuthProvider.credential(signInResult.idToken);
-        return credentials;
-    }
-    catch(err){
-        throw new Error(err.message);
-    }
-}
-
-//just returns credentials
 const googleSigninLogin = async() => {
     try{
-        
         const signInResult = await getSignInResult();
+        const methods = await auth().fetchSignInMethodsForEmail(signInResult.user.email);
+        if(methods.length > 0 && !methods.includes("google.com")) throw new Error("[auth/email-already-in-use] Email is already in use./ Try connecting accounts from profile page.");
+        if(methods.length == 0) throw new Error("[auth/account-does-not-exist]");
         const credentials = await auth.GoogleAuthProvider.credential(signInResult.idToken);
         return credentials;
     }
@@ -92,27 +81,51 @@ const googleSigninLogin = async() => {
     }
 }
 
-//register sonrası hesap bağlamak için kullanılabilecek işlemler
-const linkWithEmail = async(user, email) => {
+const googleSignInRegister = async() =>{
     try{
-        await user.updateEmail(email);
-        // await user.sendEmailVerification({handleCodeInApp: false});
+        const signInResult = await getSignInResult();
+        const methods = await auth().fetchSignInMethodsForEmail(signInResult.user.email);
+        if(methods.length > 0) throw new Error("[auth/email-already-in-use]");
+        const credentials = await auth.GoogleAuthProvider.credential(signInResult.idToken);
+        return {credentials: credentials, result:signInResult};
     }
     catch(err){
+        throw new Error(err.message);
+    }
+}
+//register sonrası hesap bağlamak için kullanılabilecek işlemler
+//sadece telefon numarası ile olan girişlerde email/şifre giriş yöntemi ekliyor.
+
+const addEmailToAccount = async(user, email) => {
+    try{
+        await user.updateEmail(email);
+        await auth().sendPasswordResetEmail(email);
+        // await user.sendEmailVerification({handleCodeInApp: false});
+    }
+    catch(err){console.log(err.message)
         throw new Error(err.message);
     }
 }
 
 const sendEmailVerification = async(user) => {
     try{
-        //methodda bir sıkıntı var yarın düzelt
-        await auth().currentUser.sendEmailVerification({handleCodeInApp: false});
+        await user.sendEmailVerification();
     }    
+    catch(err){
+        console.log(err)
+        throw new Error(err.message);
+    }
+}
+
+const sendResetPassword = async(user) => {
+    try{
+        await auth().sendPasswordResetEmail(user.email);
+    }
     catch(err){
         throw new Error(err.message);
     }
 }
 
-export  {loginWithEmailPassword, registerWithEmailPassword, linkWithEmail,
+export  {loginWithEmailPassword, registerWithEmailPassword, addEmailToAccount, sendEmailVerification, sendResetPassword,
         authenticateWithPhone, confirmPhoneCode,
-        googleSigninRegister, googleSigninLogin};
+        googleSigninLogin, googleSignInRegister};

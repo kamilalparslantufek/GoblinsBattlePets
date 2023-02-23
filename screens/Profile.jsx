@@ -2,10 +2,10 @@ import 'react-native-gesture-handler';
 import { useState, useEffect } from 'react';
 import auth from '@react-native-firebase/auth';
 import crashlytics from '@react-native-firebase/crashlytics';
-import { ActivityIndicator, Text, View, Button, TextInput } from 'react-native';
+import { ActivityIndicator, Text, View, Button, TextInput,Alert } from 'react-native';
 import styles from '../styles/styles';
-import { TouchableOpacity } from 'react-native-gesture-handler';
-import { linkWithEmail } from '../core/modules/firebase_auth';
+import { TouchableHighlight, TouchableOpacity } from 'react-native-gesture-handler';
+import { addEmailToAccount, sendEmailVerification, sendResetPassword } from '../core/modules/firebase';
 
 const Profile = function Profile({navigation}){
 
@@ -17,9 +17,12 @@ const Profile = function Profile({navigation}){
     //google & email verification
     const [email, setEmail] = useState();
     const [isEmailEnabled, setEmailEnabled] = useState();
-    const [isEmailVerificationSent, setEmailVerificationSent] = useState();
+    const [isEmailVerificationSent, setEmailVerificationSent] = useState(false);
     const [isEmailVerified, setEmailVerified] = useState();
+    const [isPasswordEnabled, setPasswordEnabled] = useState();
+    //google
     const [isGoogleEnabled, setGoogleEnabled] = useState();
+    
     //phone number related
     const [phoneNumber, setPhoneNumber] = useState();
     const [phoneLinkState, setPhoneLinkState] = useState(false);
@@ -29,7 +32,7 @@ const Profile = function Profile({navigation}){
     
     const checkUserStatus = async () => {
         const user = auth().currentUser;
-        console.log(user)
+        console.log(user);
         setUser(user);
         if(user.phoneNumber != undefined){
             setPhoneLinkState(true)
@@ -45,6 +48,7 @@ const Profile = function Profile({navigation}){
             try{
                 const methods = await auth().fetchSignInMethodsForEmail(user.email);
                 methods.includes("google.com") ? (setGoogleEnabled(true)) : (setGoogleEnabled(false));
+                methods.includes("password") ? (setPasswordEnabled(true)) : (setPasswordEnabled(false));
             }
             catch(err){
                 console.log(err);
@@ -55,21 +59,55 @@ const Profile = function Profile({navigation}){
         }
         setLoading(false)
     };
-    async function updateEmail(){
+
+    //email functions
+    //add email
+    async function addEmail(){
         try{
-            console.log(email)
-            await linkWithEmail(auth().currentUser,email);
+            await addEmailToAccount(currentUser,email);
+            Alert.alert('GoblinsBattlePets', 'Check your email for setting a password.', [
+                {
+                    text: 'OK',
+                    onPress: () => {},
+                }
+            ]);
             checkUserStatus();
         }
         catch(err){
-            console.log(err);
             crashlytics().log(err.message);
-            crashlytics().recordError(err);   
-            checkUserStatus();
+            crashlytics().recordError(err);
         }
     }
+    //send email verificatiion code
+    async function sendVerification(){
+        setEmailVerificationSent(true);
+        try{
+            await sendEmailVerification(currentUser);
+            
+        }
+        catch(err){
+            console.log(err)
+        }
+    }
+
+    async function setPassword(){
+        try{
+            const methods = await auth().fetchSignInMethodsForEmail(currentUser.email);
+            await sendResetPassword(currentUser);
+            Alert.alert('GoblinsBattlePets', 'Check your email.', [{
+                text: 'OK',
+                onPress: () => {}
+            }])
+        }
+        catch(err){
+            console.log(err)
+            crashlytics().log(err.message);
+            crashlytics().recordError(err)
+        }
+    }
+
     //after creating the account link it with phone number
-    async function ConfirmCode(){
+    async function confirmCode(){
         setLoading(true)
         try{
 
@@ -111,7 +149,7 @@ const Profile = function Profile({navigation}){
         }
     }
     //send phone number link verification code
-    async function VerifyPhone(){
+    async function verifyPhone(){
         setLoading(true);
         try{
             auth().verifyPhoneNumber(`+${phoneNumber}`)
@@ -129,6 +167,8 @@ const Profile = function Profile({navigation}){
             setLoading(false);
         }
     }
+   
+    //effects
     useEffect(() => {
         setLoading(true)
         checkUserStatus()
@@ -155,63 +195,76 @@ const Profile = function Profile({navigation}){
                         </View>
                     </View>
                 </View>
+                {/* email / password options */}
                 <View>
                     {isEmailEnabled? 
-                    (
+                    (<View style={{marginVertical:'1%'}}>
+
                         <View>
                             <Text style={{color:'#aaa'}}>User</Text>
                             <Text style={{color:'white'}}>{currentUser.email}</Text>
-                            {isEmailVerified?
-                            (null) : (
-                                <View>
-                                    <TouchableOpacity>
+                        </View>
+                        {/* check if email is verified */}
+                        {isEmailVerified? (
+                            <View>
+                                <Text style={{color:'#fff'}}>Your email is verified.</Text>
+                            </View>
+                        ) : (
+                            <View>
+                                {isEmailVerificationSent? (
+                                    <Text style={{color:'#fff'}}>Check your mail for verification.</Text>
+                                ) : (
+                                    <TouchableOpacity onPress={() => {sendVerification()}}>
                                         <View>
-                                            <Text style={{color:'#fff'}}>Click here to verify your email.[NOT IMPLEMENTED]</Text>
+                                            <Text style={{color:'#fff'}}>Click here to verify your email.</Text>
                                         </View>
                                     </TouchableOpacity>
-                                    {isEmailVerificationSent ?
-                                    (
-                                        <Text>Check your email!</Text>
-                                    ) : (null)}
+                                )}       
+                            </View>
+                        )}
+                        {/* check if password is enabled */}
+                        {isPasswordEnabled? (
+                            <TouchableOpacity
+                            onPress={() => {setPassword()}}>
+                                <View>
+                                    <Text style={{color:'#aaa'}}>Click here to reset your password.</Text>
                                 </View>
-                            )}
-                        </View>
-
+                            </TouchableOpacity>
+                        ):
+                        (
+                            <TouchableOpacity
+                            onPress={() => {setPassword()}}>
+                                <View>
+                                    <Text style={{color:'#aaa'}}>Click here to set a password.</Text>
+                                </View>
+                            </TouchableOpacity>                            
+                        )}
+                    </View>
                     )
                     :(
                         <View>
-                            {isEmailVerificationSent? (
+                            <Text style={{color:'#aaa'}}>You can add and verify your email here.</Text>
+                            <TextInput
+                            value = {email}
+                            onChangeText={(text) => {setEmail(text)}}
+                            style = {{ color: '#fff',
+                                borderWidth: 1,
+                                borderColor: '#ddd',
+                                height: 40,
+                                width: '100%',
+                                marginTop: "2%",
+                                marginBottom: '3%',
+                                paddingLeft: '1%'}}
+                            placeholderTextColor = "#ddd"
+                            placeholder = "Enter your email here"
+                            >
+                            </TextInput>
+                            <TouchableOpacity
+                            onPress={() => {addEmail()}}>
                                 <View>
-                                    <Text style={{color:'#fff'}}>Check your email for verification mail.</Text>
+                                    <Text style={{color:'#fff'}}>UPDATE EMAIL</Text>
                                 </View>
-                            )
-                            : (
-                                <View>
-                                    <Text style={{color:'#aaa'}}>You can add and verify your email here.</Text>
-                                    <TextInput
-                                    value = {email}
-                                    onChangeText={(text) => {setEmail(text)}}
-                                    style = {{ color: '#fff',
-                                        borderWidth: 1,
-                                        borderColor: '#ddd',
-                                        height: 40,
-                                        width: '100%',
-                                        marginTop: "2%",
-                                        marginBottom: '3%',
-                                        paddingLeft: '1%'}}
-                                    placeholderTextColor = "#ddd"
-                                    placeholder = "Enter your email here"
-                                    >
-                                    </TextInput>
-                                    <TouchableOpacity
-                                    onPress={() => {updateEmail()}}>
-                                        <View>
-                                            <Text style={{color:'#fff'}}>UPDATE EMAIL</Text>
-                                        </View>
-                                    </TouchableOpacity>
-                                </View>
-                            )}
-                         
+                            </TouchableOpacity>
                         </View>
                     )}
 
@@ -219,6 +272,7 @@ const Profile = function Profile({navigation}){
                 <View>
                     {error ? (<Text style={{color:"white"}}>{errorMessage}</Text>) : (null)}
                 </View>
+                {/* phone */}
                 <View>
                     {phoneLinkState==false? (
                     <View style={{marginTop:"2%"}}>
@@ -246,7 +300,7 @@ const Profile = function Profile({navigation}){
                                 </TextInput>
                                 <View>
                                     <View>
-                                        <Button title='Verify Phone Number' onPress={() => {VerifyPhone()}}></Button>
+                                        <Button title='Verify Phone Number' onPress={() => {verifyPhone()}}></Button>
                                     </View>
                                 </View>
                             </View>) 
@@ -271,7 +325,7 @@ const Profile = function Profile({navigation}){
                                     setVerificationCode(text)
                                 }}>
                                 </TextInput>
-                                <Button style={styles.registerButton} title='Send' onPress={() => {ConfirmCode()}}></Button>
+                                <Button style={styles.registerButton} title='Send' onPress={() => {confirmCode()}}></Button>
                             </View>)}
                     </View>
                             )
