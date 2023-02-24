@@ -6,6 +6,8 @@ import styles from '../styles/styles';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import auth from '@react-native-firebase/auth';
 import { authenticateWithPhone, confirmPhoneCode, googleSignInRegister, registerWithEmailPassword } from '../core/modules/firebase';
+import {useDispatch} from 'react-redux';
+import { setUserValue, setStatus } from '../core/redux/userSlice';
 
  const Register = function Register({navigation}){
     const [email, setEmail] = useState();
@@ -21,6 +23,13 @@ import { authenticateWithPhone, confirmPhoneCode, googleSignInRegister, register
     //google
     const [googleRegisterOnProgress, setGoogleRegisterProgress] = useState(false);
     const [googleCredentials, setGoogleCredentials] = useState();
+    //redux
+    const dispatch = useDispatch();
+    function updateUserAfterLogin(){
+      dispatch(setUserValue(auth().currentUser));
+      dispatch(setStatus("online"))
+    }
+      
     //email
     async function CreateUser() {
         try{
@@ -29,6 +38,7 @@ import { authenticateWithPhone, confirmPhoneCode, googleSignInRegister, register
             if(googleRegisterOnProgress){
                 await auth().currentUser.linkWithCredential(googleCredentials.credentials)
             }
+            updateUserAfterLogin();
             navigation.navigate('Profile');
         } 
         catch(err){
@@ -74,6 +84,7 @@ import { authenticateWithPhone, confirmPhoneCode, googleSignInRegister, register
         try{
             // bu kısım içinde login işlemi gerçekleşiyor kod doğru girilmişse
             const res = confirmPhoneCode(confirmCode,confirmation);
+            updateUserAfterLogin();
             navigation.navigate('List');
         }
         catch(err){
