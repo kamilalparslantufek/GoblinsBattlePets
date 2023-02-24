@@ -2,14 +2,13 @@ import 'react-native-gesture-handler';
 import { useState } from 'react';
 import auth from '@react-native-firebase/auth';
 import crashlytics from '@react-native-firebase/crashlytics';
-import { Text, View, Button, TextInput } from 'react-native';
-import Home from './Home'
-import List from './List';
-import Register from './Register';
+import { Text, View, Button, TextInput } from 'react-native';;
 import styles from '../styles/styles';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { GoogleSigninButton} from '@react-native-google-signin/google-signin';
-import { loginWithEmailPassword, googleSigninAuthentication, sendResetPassword, googleSigninLogin }  from '../core/modules/firebase';
+import { loginWithEmailPassword,  googleSigninLogin }  from '../core/modules/firebase';
+import {useDispatch} from 'react-redux';
+import { setUserValue, setStatus } from '../core/redux/userSlice';
 
 const Login = function Login({navigation})
 {
@@ -27,13 +26,22 @@ const Login = function Login({navigation})
   const [passwordTextState, setPasswordState] = useState("");
   //google signin
   const [isGoogleSignInProgress, setGoogleSignInState] = useState(false);
+  //redux
+  const dispatch = useDispatch();
+  function updateUserAfterLogin(){
+    dispatch(setUserValue(auth().currentUser));
+    dispatch(setStatus("online"))
+  }
 
+  //google login
   async function GoogleLogin(){
     try{
       setGoogleSignInState(true);
       const credentials = await googleSigninLogin();
       await auth().signInWithCredential(credentials);
+      updateUserAfterLogin();
       navigation.navigate("List");
+
     }
     catch(err){
       console.log(err)
@@ -43,10 +51,11 @@ const Login = function Login({navigation})
       setGoogleSignInState(false)
     }
   }
-
+  //email
   async function EmailLogin(){
     try{
       await loginWithEmailPassword(emailTextState, passwordTextState)
+      updateUserAfterLogin();
       navigation.navigate("List")
     }  
     catch(err)
@@ -61,10 +70,7 @@ const Login = function Login({navigation})
       
     }  
   }
-  async function resetPassword(){
-      navigation.navigate('ResetPassword');
-  }
-
+  //phone
   async function SendAuthCodePhone(phoneNumber){
     try{
       // const rnfbProvider = firebase.appCheck().newReactNativeFirebaseAppCheckProvider();
@@ -89,7 +95,8 @@ const Login = function Login({navigation})
   async function confirmPhoneCode(){
     try{
       
-      const res = await phoneConfirmation.confirm(phoneConfirmCodeState);
+      await phoneConfirmation.confirm(phoneConfirmCodeState);
+      updateUserAfterLogin();
       navigation.navigate('List');
       // bu kısım içinde login işlemi gerçekleşiyor kod doğru girilmişse
     }
@@ -100,6 +107,12 @@ const Login = function Login({navigation})
       crashlytics().recordError(err);
     }
   }
+
+  function resetPassword(){
+    navigation.navigate('ResetPassword');
+  }
+
+
   return(
     <View style = {styles.container}>
       {
@@ -158,7 +171,7 @@ const Login = function Login({navigation})
                 <Button title='Send Authentication Code' onPress={() => { SendAuthCodePhone(phoneNumberState)}}/>
                 <TouchableOpacity
                 style={{justifyContent:'space-evenly'}}
-                onPress={() => { navigation.navigate(Register)}}>
+                onPress={() => { navigation.navigate('Register')}}>
                 <Text style={{color:'#fff'}}>or you can register here.</Text>
                 </TouchableOpacity>
               </View>

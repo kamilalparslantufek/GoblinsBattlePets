@@ -4,10 +4,13 @@ import crashlytics from '@react-native-firebase/crashlytics';
 import { ActivityIndicator, Text, View, Button, TextInput, Image, Alert } from 'react-native';
 import styles from '../styles/styles';
 import auth from '@react-native-firebase/auth';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 const ResetPassword = function ResetPassword({navigation}){
     const [email,setEmail] = useState("");
-    const sendResetEmail = async() => {
+
+
+    async function sendResetEmail() {
         console.log(3)
         try{
             await auth().sendPasswordResetEmail(email);
@@ -17,6 +20,7 @@ const ResetPassword = function ResetPassword({navigation}){
             }])
         }
         catch(err){
+            console.log(err.message)
             crashlytics().log(err.message);
             crashlytics().recordError(err);
         }
@@ -33,9 +37,12 @@ const ResetPassword = function ResetPassword({navigation}){
             value={email}
             onChangeText={(text) => {setEmail(text)}}></TextInput>
 
-            <Button title='Reset Password'
-            onPress={sendResetEmail()}>
-            </Button>
+            <TouchableOpacity
+            onPress={() => {sendResetEmail()}}>
+                <View>
+                    <Text style={{color:'#fff'}}>Send mail.</Text>
+                </View>
+            </TouchableOpacity>
         </View>    
     )
 }

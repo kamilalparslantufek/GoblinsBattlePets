@@ -5,88 +5,66 @@ import crashlytics from '@react-native-firebase/crashlytics';
 import messaging from '@react-native-firebase/messaging';
 import { PermissionsAndroid, Alert, AppRegistry } from 'react-native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import { NavigationContainer, useRoute } from '@react-navigation/native';
-import { firebase } from '@react-native-firebase/app-check';
+import { NavigationContainer } from '@react-navigation/native';
 import Home from './screens/Home'
 import Register from './screens/Register';
 import Login from './screens/Login';
 import List from './screens/List'
 import Profile from './screens/Profile'
+import Logout from './screens/Logout'
 import ResetPassword from './screens/ResetPassword';
+import { useDispatch,useSelector,Provider } from 'react-redux';
+import { setUserValue, setStatus, getUserValue, getUserStatus } from './core/redux/userSlice';
+import { store } from './core/redux/store';
+
 PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
 
-
-function Logout({navigation}){
-  auth()
-  .signOut()
-  .then(() => {
-    navigation.navigate("Home");
-  })
-  .catch((err) =>
-  {
-    crashlytics().log(`tried to logout when not logged in`);
-    crashlytics().recordError(err);
-    navigation.navigate("Home");
-  })
+export default AppWrapper = () =>{
+  //redux
+  return(
+    <Provider store={store}>
+        <App/>
+    </Provider>
+  )
 }
 
+
+
 const Drawer = createDrawerNavigator();
-
-export default function App() {
-  //routing
-  const[initialRoute, setInitialRoute] = useState('Home');  
-
+const App = () =>  {
+  
+  const initialRoute = 'Home';
+  const dispatch = useDispatch();
 
   useEffect(() => {
-    const unsubscribe = messaging().onMessage(async remoteMessage => {
+    if(auth().currentUser == null ){
+      dispatch(setUserValue(undefined))
+      dispatch(setStatus("offline"))
+    }
+    else{
+      dispatch(setUserValue(auth().currentUser))
+      dispatch(setStatus("online"))
+    }
+  }, []);
+  useEffect(() => {
+    const unsubscribe = messaging().onMessage(async (remoteMessage) => {
       console.log(remoteMessage);
     });
     return unsubscribe;
-  }, []);
+  }, []);  
 
-
-  function onAuthStateChanged(currentUser){
-      setUser(currentUser);
-      if(currentUser) setInitialRoute("Profile");
-  }
-  useEffect(() => {
-      const sub = auth().onAuthStateChanged(onAuthStateChanged);
-      return sub;
-  })
-  const [currentUser, setUser] = useState();
- 
-
-  return (    
+  return (
     <NavigationContainer>
-      {/* <Drawer.Navigator useLegacyImplementation={true}>
-                  <Drawer.Screen name="Home" component = { Home } />
-                  <Drawer.Screen name="Login" component = { Login } />
-                  <Drawer.Screen name="Register" component = { Register } />
-                  <Drawer.Screen name="List" component = { List } />
-                  <Drawer.Screen name="Logout" component={ Logout } />
-                  <Drawer.Screen name="Profile" component={ Profile} />
-      </Drawer.Navigator> */}
-            {
-              currentUser == undefined ? (
-                <Drawer.Navigator initialRouteName={initialRoute} useLegacyImplementation={true}>
-                  <Drawer.Screen name="Home" component = { Home } />
-                  <Drawer.Screen name="Login" component = { Login } />
-                  <Drawer.Screen name="List" component = { List } />
-                  <Drawer.Screen name="Register" component = { Register } />
-                  <Drawer.Screen options={{drawerItemStyle: {height:0}}} name ="ResetPassword" component={ResetPassword}/>
-                </Drawer.Navigator> 
-              )
-              :
-              (
-                <Drawer.Navigator initialRouteName={initialRoute} useLegacyImplementation={true}>
-                  <Drawer.Screen options={{drawerItemStyle: {height:0}}} name ="ResetPassword" component={ResetPassword}/>
-                  <Drawer.Screen name="Home" component = { Home } />
-                  <Drawer.Screen name="Profile" component = { Profile } />
-                  <Drawer.Screen name="List" component = { List } />
-                  <Drawer.Screen name="Logout" component={ Logout } />
-                </Drawer.Navigator>
-              )
-            }
-    </NavigationContainer>
+              <Drawer.Navigator initialRouteName={initialRoute} useLegacyImplementation={true}>
+                <Drawer.Screen name="Home" component = { Home } />
+                <Drawer.Screen options={{drawerItemStyle: {height: useSelector((state) => getUserStatus(state))=="online" ? 45 : 0 }}} name="Profile" component = { Profile } /> 
+                <Drawer.Screen options={{drawerItemStyle: {height: useSelector((state) => getUserStatus(state))=="offline" ? 45 : 0 }}}name="Login" component = { Login } />
+                <Drawer.Screen options={{drawerItemStyle: {height: useSelector((state) => getUserStatus(state))=="online" ? 45 : 0 }}}name="List" component = { List } />
+                <Drawer.Screen options={{drawerItemStyle: {height: useSelector((state) => getUserStatus(state))=="offline" ? 45 : 0 }}}name="Register" component = { Register } />
+                <Drawer.Screen options={{drawerItemStyle: {height: useSelector((state) => getUserStatus(state))=="online" ? 45 : 0 }}}name="Logout" component={ Logout } /> 
+                <Drawer.Screen options={{drawerItemStyle: {height:0}}} name ="ResetPassword" component={ResetPassword}/>
+              </Drawer.Navigator> 
+  </NavigationContainer>
+      
   );
 }

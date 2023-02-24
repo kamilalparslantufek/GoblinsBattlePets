@@ -4,23 +4,17 @@ import {BLIZZARD_API_KEY, BLIZZARD_API_SECRET} from '@env';
 import crashlytics from '@react-native-firebase/crashlytics';
 import {ActivityIndicator, Text, View, Button, Image} from 'react-native';
 import {useEffect, useState, useRef} from 'react';
-import auth from '@react-native-firebase/auth';
 import styles from '../styles/styles';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-
-
+import {useSelector } from 'react-redux';
+import { getUserStatus, getUserValue } from '../core/redux/userSlice';
 
 const Home = function Home({navigation}) {
-  const [currentUser, setUser] = useState();
+  const currentUser = useSelector((state) => state.user.value);
   const [singlePetData, setSinglePetData] = useState([]);
-  const petListData = useRef([]);
   const [isLoading, setLoading] = useState(true);
+  const petListData = useRef([]);
   const apiAccessToken = useRef('');
-
-  const checkUserStatus = async () => {
-    const user = auth().currentUser;
-    setUser(user);
-  };
 
   const getSinglePetData = async () => {
     return axios
@@ -128,17 +122,8 @@ const Home = function Home({navigation}) {
       });
   };
 
-  function onAuthStateChanged(currentUser) {
-    setUser(currentUser);
-  }
-  useEffect(() => {
-    const sub = auth().onAuthStateChanged(onAuthStateChanged);
-    return sub;
-  });
-
   useEffect(() => {
     setLoading(true);
-    checkUserStatus();
     getSinglePetData();
     getPetListData();
   }, []);
