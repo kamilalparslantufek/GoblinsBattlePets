@@ -95,8 +95,12 @@ const Login = function Login({navigation})
   async function confirmPhoneCode(){
     try{
       
-      await phoneConfirmation.confirm(phoneConfirmCodeState);
+      const res = await phoneConfirmation.confirm(phoneConfirmCodeState);
+      console.log(res);
       updateUserAfterLogin();
+      setConfirmation(null);
+      setPhoneNumberState("");
+      setConfirmCodeState("");
       navigation.navigate('List');
       // bu kısım içinde login işlemi gerçekleşiyor kod doğru girilmişse
     }

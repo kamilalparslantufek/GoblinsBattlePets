@@ -1,18 +1,21 @@
 import 'react-native-gesture-handler';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect} from 'react';
+//firebase and notifications
 import auth from '@react-native-firebase/auth';
 import crashlytics from '@react-native-firebase/crashlytics';
 import messaging from '@react-native-firebase/messaging';
 import { PermissionsAndroid, Alert, AppRegistry } from 'react-native';
-import { createDrawerNavigator } from '@react-navigation/drawer';
+//views + navigator
+import { createDrawerNavigator, DrawerContentScrollView,DrawerItemList,DrawerItem } from '@react-navigation/drawer';
 import { NavigationContainer } from '@react-navigation/native';
 import Home from './screens/Home'
 import Register from './screens/Register';
 import Login from './screens/Login';
 import List from './screens/List'
 import Profile from './screens/Profile'
-import Logout from './screens/Logout'
 import ResetPassword from './screens/ResetPassword';
+import Logout from './screens/Logout';
+//redux
 import { useDispatch,useSelector,Provider } from 'react-redux';
 import { setUserValue, setStatus, getUserValue, getUserStatus } from './core/redux/userSlice';
 import { store } from './core/redux/store';
@@ -29,13 +32,11 @@ export default AppWrapper = () =>{
 }
 
 
-
 const Drawer = createDrawerNavigator();
 const App = () =>  {
   
   const initialRoute = 'Home';
   const dispatch = useDispatch();
-
   useEffect(() => {
     if(auth().currentUser == null ){
       dispatch(setUserValue(undefined))
@@ -51,8 +52,28 @@ const App = () =>  {
       console.log(remoteMessage);
     });
     return unsubscribe;
-  }, []);  
+  });
+  //
 
+// function CustomDrawerContent(props) {
+//   if(useSelector((state) => getUserStatus(state)) == "online")
+//   {
+//     return (
+//       <DrawerContentScrollView {...props}>
+//       <DrawerItemList {...props} />
+//       <DrawerItem label="Logout" drawerItemStyle={{height: useSelector((state) => getUserStatus(state))=="online" ? 45 : 0 }} onPress={() => NavigationContainer.} />
+//     </DrawerContentScrollView>
+//   );
+//   }
+//   else{
+//     return (
+//       <DrawerContentScrollView {...props}>
+//       <DrawerItemList {...props} />
+//     </DrawerContentScrollView>
+//     )
+//   }
+// }
+  //
   return (
     <NavigationContainer>
               <Drawer.Navigator initialRouteName={initialRoute} useLegacyImplementation={true}>
