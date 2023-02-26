@@ -86,8 +86,9 @@ const Login = function Login({navigation})
       setButtonVisibility(false);  
       }
     catch(err){
-      console.log(err)
-      crashlytics().log(`Invalid Phone Number.`);
+      console.log(err);
+      crashlytics().log(err.message);
+      crashlytics().recordError(err);
       setButtonVisibility(true);
     }
   }
@@ -101,14 +102,20 @@ const Login = function Login({navigation})
       setConfirmation(null);
       setPhoneNumberState("");
       setConfirmCodeState("");
+      setButtonVisibility(true);
+      setConfirmation(undefined);
       navigation.navigate('List');
       // bu kısım içinde login işlemi gerçekleşiyor kod doğru girilmişse
     }
     catch(err){
       console.log(err.code)
       setErrorState(true);
+      setButtonVisibility(true);
+      setConfirmation(undefined);
+      setConfirmCodeState("");
       crashlytics().log("invalid code entered");
       crashlytics().recordError(err);
+      setConfirmation(undefined);
     }
   }
 

@@ -9,7 +9,6 @@ import { FlatList } from "react-native-gesture-handler";
 
 const List = function List({ navigation }){
     
-    const [currentUser, setUser] = useState();
     const [singlePetScreenToggled, setSinglePetScreenToggle] = useState(false);
     const [singlePetData, setSinglePetData] = useState([]);
     const singlePetAuctions = useRef([]);
@@ -17,10 +16,7 @@ const List = function List({ navigation }){
     const [isLoading, setLoading] = useState(true);
     const apiAccessToken = useRef("");
    
-    const checkUserStatus = async () => {
-      const currentUser = auth().currentUser;
-      setUser(currentUser);
-    }
+
     function getSinglePetData(id)
     {
         setLoading(true)
@@ -129,19 +125,11 @@ const List = function List({ navigation }){
           })
     }
 
-    function onAuthStateChanged(currentUser){
-      setUser(currentUser);
-    }
-    useEffect(() => {
-      const sub = auth().onAuthStateChanged(onAuthStateChanged);  
-      return sub;
-    })
-
     useEffect(() => {
       setLoading(true);
-      checkUserStatus();
       getPetListData();
     }, []);
+    
     const renderItem = ({item}) => {
         return(
             <Item

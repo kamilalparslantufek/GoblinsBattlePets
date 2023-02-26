@@ -13,7 +13,9 @@ import { setUserValue, setStatus } from '../core/redux/userSlice';
     const [email, setEmail] = useState();
     const [password, setPassword] = useState();
     const [phoneNumber, setPhoneNumber] = useState();
+    
     const [error, setErrorState] = useState(false);
+
     const [isLoading, setLoading] = useState(false);
     const [registerMethod, setRegisterMethod] = useState(0);
     const [isButtonsVisible, setButtonVisibility] = useState(true);
@@ -77,6 +79,8 @@ import { setUserValue, setStatus } from '../core/redux/userSlice';
             crashlytics().log('verification message could not be sent.')
             crashlytics().recordError(err);
             setErrorState(true);
+            setButtonVisibility(true);
+            setConfirmation(undefined);
             setLoading(false);
         }
     }
@@ -84,6 +88,8 @@ import { setUserValue, setStatus } from '../core/redux/userSlice';
         try{
             // bu kısım içinde login işlemi gerçekleşiyor kod doğru girilmişse
             const res = confirmPhoneCode(confirmCode,confirmation);
+            setConfirmation(undefined);
+            setButtonVisibility(true);
             updateUserAfterLogin();
             navigation.navigate('List');
         }
