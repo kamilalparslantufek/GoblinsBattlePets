@@ -10,11 +10,14 @@ import {useSelector } from 'react-redux';
 import { getUserStatus, getUserValue } from '../core/redux/userSlice';
 
 const Home = function Home({navigation}) {
+  //screen variables
   const currentUser = useSelector((state) => state.user.value);
-  const [singlePetData, setSinglePetData] = useState([]);
   const [isLoading, setLoading] = useState(true);
-  const petListData = useRef([]);
+  const [errorMessage, setErrorMessage] = useState();
+  const [errorStatus, setErrorStatus] = useState(false);
+  //blizz api data
   const apiAccessToken = useRef('');
+  const [singlePetData, setSinglePetData] = useState([]);
 
   const getSinglePetData = async () => {
     return axios
@@ -128,93 +131,105 @@ const Home = function Home({navigation}) {
     getPetListData();
   }, []);
 
-  return (
-    <View style={styles.container}>
-      {isLoading ? (
-        <ActivityIndicator />
-      ) : (
-        <View>
-          <View>
-            <View style={styles.containerinfo}>
-              {!isLoading ? (
-                <Image
-                  resizeMode="contain"
-                  style={{
-                    width: 30,
-                    height: 30,
-                  }}
-                  source={{uri: singlePetData.icon}}
-                />
-              ) : (
-                <View></View>
+  return(
+    <View style={[styles.newContainer, styles.backgroundLight]}>
+      {
+        isLoading ? (<ActivityIndicator/>)
+        :
+        (
+          //login kısmı
+          <View style = {[styles.cardBackgroundLight, styles.cardLarge]}>
+              {
+              currentUser == undefined ? (
+                <View style = {[styles.centerTextContainer]}>
+                  <Text style = {[styles.textDark, styles.fontSize20]}>Goblin's Battle Pets</Text>
+                  <Text style = {[styles.textDark]}>Learn about more battle pets, and their prices across the realms of World of Warcraft!</Text>   
+                </View>
+              )
+              :(
+                <View style = {styles.centerTextContainer}> 
+                  <Text style = {[styles.textDark, styles.fontSize20]}>Goblin's Battle Pets</Text>
+                  <Text style = {[styles.textDarkMuted]}>Hello {currentUser.email}!</Text>
+                </View>
               )}
-              <Text style={styles.loginTitle}>{singlePetData.name}</Text>
-            </View>
+            {/* welcome image kısmı */}
             <View>
-              <Text style={styles.loginTitle}>{singlePetData.description}</Text>
-              {!isLoading ? (
-                <Image
-                  resizeMode="center"
-                  style={{
-                    minHeight: 100,
-                    minWidth: 100,
-                    maxWidth: 600,
-                    maxHeight: 600,
-                    margin: '10%',
-                  }}
-                  source={{uri: singlePetData.displayImage}}
-                />
-              ) : (
-                <View></View>
+              {isLoading? (null) : (
+                <View style = {{padding:'6%'}}>
+                  <View style = {{flexDirection:'row', alignItems:'center'}}>
+                    <Image
+                    resizeMode='contain'
+                    style={[styles.imageIcon]}
+                    source={{uri: singlePetData.icon}}
+                    />
+                    <Text style = {[styles.textDark, styles.fontSize15]}>{singlePetData.name}</Text>
+                  </View>
+                  <Text style = {styles.textDarkMuted}>{singlePetData.description}</Text>
+                </View>
+                )
+              }
+            </View>
+            {/* 3D model kısmı */}
+            <>
+              {isLoading? (null) : (
+                <View style = {styles.centerTextContainer}>
+                    <Text style= {[styles.textDark, styles.fontSize18]}>{singlePetData.name} 3D Model</Text>
+                    <Image
+                    resizeMode="contain"
+                    style={{
+                      minHeight: 100,
+                      minWidth: 100,
+                      maxWidth: 600,
+                      width: '100%',
+                      maxHeight: 600,
+                      borderRadius: 5,
+                      marginHorizontal: '6%'
+                    }}
+                    source={{uri: singlePetData.displayImage}}
+                    />
+                </View>
               )}
-            </View>
+            </>
+            {/* login buton kısmı */}
+            <>
+            {
+              currentUser == undefined ? (
+                <View style = {styles.homeButtonGroupContainer}>
+                  <TouchableOpacity  onPress={() => navigation.navigate("Login")}>
+                    <View style = {[styles.button, styles.buttonLight]}>
+                      <Text style = {styles.buttonText}>Sign In</Text>
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                    <View style = {[styles.button, styles.buttonLight]}>
+                      <Text style = {styles.buttonText}>Sign Up</Text>
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              ) 
+              : (
+                <View style = {styles.homeButtonGroupContainer}>
+                  <TouchableOpacity  onPress={() => navigation.navigate("List")}>
+                    <View style = {[styles.button, styles.buttonLight]}>
+                      <Text style = {styles.buttonText}>Pet List</Text>
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+                    <View style = {[styles.button, styles.buttonLight]}>
+                      <Text style = {styles.buttonText}>Profile</Text>
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              )
+            }
+            </>
           </View>
-          {currentUser == undefined ? (
-            <View style={{alignItems: 'center'}}>
-              <Text style={{color: 'white'}}>
-                Log in to learn about more pets.
-              </Text>
-              <View style={{width: '50%', margin: '4%',marginBottom:0, justifyContent:"center"}}>
-                <Button
-                  color="#D4AF37"
-                  title="Login"
-                  onPress={() =>{ navigation.navigate("Login")}}/>
-              </View>
-              <View style={{flexDirection:'row', alignItems:'center', width:'50%', paddingTop:'1%'}}>
-                <View style={{flex:1, height:1, backgroundColor:'#aaa'}}></View>
-                <View>
-                  <Text style={{color:"#aaa", paddingLeft:'3%', paddingRight:'3%'}}>OR</Text>
-                </View>
-                <View style={{flex:1, height:1, backgroundColor:'#aaa'}}></View>
-              </View>
-                <TouchableOpacity
-                  onPress={() => {navigation.navigate("Register")}}>
-                  <Text style={{color:'#D4AF37'}}>Click here to create an account!</Text>
-                </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={{alignItems: 'center'}}>
-              <Text style={{color: 'white', margin:"1%"}}>Hello {currentUser.email}</Text>
-              <View style={{width:"100%"}}>
-                <TouchableOpacity style={{marginBottom:'1%'}} onPress={() => {navigation.navigate("List")}}>
-                <View style={{borderWidth:2, borderColor:'#D4af37', paddingHorizontal:"5%", paddingVertical:"1%",borderRadius:9}}>
-                  <Text style={{color:"#fff"}}>Click here to browse the list of pets avaible in the game.</Text>
-                </View>
-                </TouchableOpacity>
-              </View>
-              {currentUser.phoneNumber == undefined ? (
-                <TouchableOpacity style={{width:'100%'}} onPress={() => {navigation.navigate("Profile")}}>
-                <View style={{borderWidth:2, borderColor:'#D4af37', paddingHorizontal:"5%", paddingVertical:"1%",borderRadius:9, width:'100%'}}>
-                  <Text style={{color:"#fff"}}>You can link your phone to your account here!</Text>
-                </View>
-                </TouchableOpacity>
-              ) : (null)}
-            </View>
-          )}
-        </View>
-      )}
+        )
+      }
     </View>
-  );
+  )
+
+
 };
 
 export default Home;

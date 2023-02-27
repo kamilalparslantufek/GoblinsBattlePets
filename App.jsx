@@ -7,7 +7,7 @@ import messaging from '@react-native-firebase/messaging';
 import { PermissionsAndroid, Alert, AppRegistry } from 'react-native';
 //views + navigator
 import { createDrawerNavigator, DrawerContentScrollView,DrawerItemList,DrawerItem } from '@react-navigation/drawer';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import Home from './screens/Home'
 import Register from './screens/Register';
 import Login from './screens/Login';
@@ -19,6 +19,7 @@ import Logout from './screens/Logout';
 import { useDispatch,useSelector,Provider } from 'react-redux';
 import { setUserValue, setStatus, getUserValue, getUserStatus } from './core/redux/userSlice';
 import { store } from './core/redux/store';
+import { SinglePet } from './screens/SinglePet';
 
 PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
 
@@ -37,6 +38,8 @@ const App = () =>  {
   
   const initialRoute = 'Home';
   const dispatch = useDispatch();
+  // const navigation = useNavigation();
+
   useEffect(() => {
     if(auth().currentUser == null ){
       dispatch(setUserValue(undefined))
@@ -48,12 +51,28 @@ const App = () =>  {
     }
   }, []);
   useEffect(() => {
+    messaging().onNotificationOpenedApp(remoteMessage => {
+      console.log("app opened", remoteMessage.notification);
+      if(useSelector((state) => getUserStatus(states)) == "online")
+      {
+        // navigation.navigate('SinglePet', {id:remoteMessage.data.id});
+      }
+      else{
+        // navigation.navigate('Login');
+      }
+    })
+
     const unsubscribe = messaging().onMessage(async (remoteMessage) => {
       console.log(remoteMessage);
     });
     return unsubscribe;
   });
   //
+
+
+messaging().setBackgroundMessageHandler(async remoteMessage => {
+  console.log(remoteMessage);
+})
 
 // function CustomDrawerContent(props) {
 //   if(useSelector((state) => getUserStatus(state)) == "online")
@@ -83,7 +102,8 @@ const App = () =>  {
                 <Drawer.Screen options={{drawerItemStyle: {height: useSelector((state) => getUserStatus(state))=="online" ? 45 : 0 }}}name="List" component = { List } />
                 <Drawer.Screen options={{drawerItemStyle: {height: useSelector((state) => getUserStatus(state))=="offline" ? 45 : 0 }}}name="Register" component = { Register } />
                 <Drawer.Screen options={{drawerItemStyle: {height: useSelector((state) => getUserStatus(state))=="online" ? 45 : 0 }}}name="Logout" component={ Logout } /> 
-                <Drawer.Screen options={{drawerItemStyle: {height:0}}} name ="ResetPassword" component={ResetPassword}/>
+                <Drawer.Screen options={{drawerItemStyle: {height: 0}}} name ="ResetPassword" component={ResetPassword}/>
+                <Drawer.Screen options={{drawerItemStyle: {height: 0}}} name = "SinglePet" component= {SinglePet}/>
               </Drawer.Navigator> 
   </NavigationContainer>
       

@@ -17,90 +17,90 @@ const List = function List({ navigation }){
     const apiAccessToken = useRef("");
    
 
-    function getSinglePetData(id)
-    {
-        setLoading(true)
-        axios.post(`https://oauth.battle.net/token?grant_type=client_credentials&client_id=${BLIZZARD_API_KEY}&client_secret=${BLIZZARD_API_SECRET}`)
-            .then((res) => {
-                apiAccessToken.current = res.data.access_token;
-                axios.get(`https://eu.api.blizzard.com/data/wow/pet/${id}?namespace=static-eu&locale=en_GB&access_token=${res.data.access_token}`)
-                    .then((res) => {
-                        const petData = {
-                            "id" : res.data.id,
-                            "name" : res.data.name,
-                            "description" : res.data.description,
-                            "icon" : res.data.icon,
-                            "creature_id" : res.data.creature.id
-                        }
-                        setSinglePetData(petData)
-                        axios.get(`https://eu.api.blizzard.com/data/wow/creature/${petData.creature_id}?namespace=static-eu&locale=en_GB&access_token=${apiAccessToken.current}`)
-                            .then((res) => {
-                                const display_data = res.data.creature_displays[0]
-                                axios.get(`https://eu.api.blizzard.com/data/wow/media/creature-display/${display_data.id}?namespace=static-eu&locale=en_GB&access_token=${apiAccessToken.current}`)
-                                    .then((res) => {
-                                        const display_asset = res.data.assets[0]
-                                        setSinglePetData(prevState => ({
-                                            ...prevState,
-                                            displayImage: display_asset.value
-                                        }))
-                                        axios.get(`https://eu.api.blizzard.com/data/wow/connected-realm/3674/auctions?namespace=dynamic-eu&locale=en_GB&access_token=${apiAccessToken.current}`,
-                                        {
-                                            maxContentLength: Infinity,
-                                            maxBodyLength: Infinity
-                                        })
-                                            .then((res) =>{
-                                                const filter = res.data.auctions.filter((auction) =>{
-                                                    if(auction.item.id == 82800 &&  auction.item.pet_species_id == id)
-                                                        return auction
-                                                })
-                                                // setSinglePetData(prevState => ({
-                                                //     ...prevState,
-                                                //     auctions: filter
-                                                // }))
-                                                singlePetAuctions.current = filter
-                                                // console.log(filter)
-                                                console.log(singlePetData)
-                                                console.log(singlePetAuctions)
-                                                setLoading(false)
-                                                setSinglePetScreenToggle(true)
-                                            })
-                                            .catch((err) => {
-                                                //realm auction data
-                                                console.log(err)
-                                                console.log(`realm auction`)
-                                                crashlytics().log(`realm auction`)
-                                                crashlytics().recordError(err)
-                                            })
-                                    })
-                                    .catch((err) => {
-                                        //pet creature display data
-                                        console.log(`creature display`)
-                                        crashlytics().log(`creature display`)
-                                        crashlytics().recordError(err)
-                                    })
-                            })
-                            .catch((err) => {
-                                //pet creature data
-                                console.log(`pet creature`)
-                                crashlytics().log(`pet creature`)
-                                crashlytics().recordError(err)
-                            })
-                    })
-                    .catch((err) => {
-                        //single pet data
-                        crashlytics().log(`single pet data`)
-                        crashlytics().recordError(err)
-                    })
+    // function getSinglePetData(id)
+    // {
+    //     setLoading(true)
+    //     axios.post(`https://oauth.battle.net/token?grant_type=client_credentials&client_id=${BLIZZARD_API_KEY}&client_secret=${BLIZZARD_API_SECRET}`)
+    //         .then((res) => {
+    //             apiAccessToken.current = res.data.access_token;
+    //             axios.get(`https://eu.api.blizzard.com/data/wow/pet/${id}?namespace=static-eu&locale=en_GB&access_token=${res.data.access_token}`)
+    //                 .then((res) => {
+    //                     const petData = {
+    //                         "id" : res.data.id,
+    //                         "name" : res.data.name,
+    //                         "description" : res.data.description,
+    //                         "icon" : res.data.icon,
+    //                         "creature_id" : res.data.creature.id
+    //                     }
+    //                     setSinglePetData(petData)
+    //                     axios.get(`https://eu.api.blizzard.com/data/wow/creature/${petData.creature_id}?namespace=static-eu&locale=en_GB&access_token=${apiAccessToken.current}`)
+    //                         .then((res) => {
+    //                             const display_data = res.data.creature_displays[0]
+    //                             axios.get(`https://eu.api.blizzard.com/data/wow/media/creature-display/${display_data.id}?namespace=static-eu&locale=en_GB&access_token=${apiAccessToken.current}`)
+    //                                 .then((res) => {
+    //                                     const display_asset = res.data.assets[0]
+    //                                     setSinglePetData(prevState => ({
+    //                                         ...prevState,
+    //                                         displayImage: display_asset.value
+    //                                     }))
+    //                                     axios.get(`https://eu.api.blizzard.com/data/wow/connected-realm/3674/auctions?namespace=dynamic-eu&locale=en_GB&access_token=${apiAccessToken.current}`,
+    //                                     {
+    //                                         maxContentLength: Infinity,
+    //                                         maxBodyLength: Infinity
+    //                                     })
+    //                                         .then((res) =>{
+    //                                             const filter = res.data.auctions.filter((auction) =>{
+    //                                                 if(auction.item.id == 82800 &&  auction.item.pet_species_id == id)
+    //                                                     return auction
+    //                                             })
+    //                                             // setSinglePetData(prevState => ({
+    //                                             //     ...prevState,
+    //                                             //     auctions: filter
+    //                                             // }))
+    //                                             singlePetAuctions.current = filter
+    //                                             // console.log(filter)
+    //                                             console.log(singlePetData)
+    //                                             console.log(singlePetAuctions)
+    //                                             setLoading(false)
+    //                                             setSinglePetScreenToggle(true)
+    //                                         })
+    //                                         .catch((err) => {
+    //                                             //realm auction data
+    //                                             console.log(err)
+    //                                             console.log(`realm auction`)
+    //                                             crashlytics().log(`realm auction`)
+    //                                             crashlytics().recordError(err)
+    //                                         })
+    //                                 })
+    //                                 .catch((err) => {
+    //                                     //pet creature display data
+    //                                     console.log(`creature display`)
+    //                                     crashlytics().log(`creature display`)
+    //                                     crashlytics().recordError(err)
+    //                                 })
+    //                         })
+    //                         .catch((err) => {
+    //                             //pet creature data
+    //                             console.log(`pet creature`)
+    //                             crashlytics().log(`pet creature`)
+    //                             crashlytics().recordError(err)
+    //                         })
+    //                 })
+    //                 .catch((err) => {
+    //                     //single pet data
+    //                     crashlytics().log(`single pet data`)
+    //                     crashlytics().recordError(err)
+    //                 })
 
-            })
-            .catch((err) => {
-                //auth
-                console.log(`auth`)
-                crashlytics().log(`auth`)
-                crashlytics().recordError(err)
-            })
+    //         })
+    //         .catch((err) => {
+    //             //auth
+    //             console.log(`auth`)
+    //             crashlytics().log(`auth`)
+    //             crashlytics().recordError(err)
+    //         })
 
-    }
+    // }
 
     const getPetListData = async () => {
         return axios.post(`https://oauth.battle.net/token?grant_type=client_credentials&client_id=${BLIZZARD_API_KEY}&client_secret=${BLIZZARD_API_SECRET}`)
@@ -134,7 +134,7 @@ const List = function List({ navigation }){
         return(
             <Item
             item={item}
-            onPress={() => {getSinglePetData(item.id)}}
+            onPress={() => {navigation.navigate('SinglePet', {id: item.id})}}
             backgroundColor = {'#121212'}
             textColor = {'#fff'} />
         )

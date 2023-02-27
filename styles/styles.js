@@ -7,6 +7,93 @@ const styles = StyleSheet.create({
       alignItems: 'center',
       justifyContent: 'center',
     },
+    //main container - center focused
+    newContainer: {
+      flex: 1,
+      alignItems:'center',
+      alignContent:'center'
+    },
+    // light theme color scheme
+    textDark: {
+      color: '#212121',
+    },
+    textDarkMuted: {
+      color: '#a0a0a0'
+    },
+    backgroundLight : {
+      backgroundColor: '#e0efff',
+    },
+    cardBackgroundLight: {
+     backgroundColor: '#fdfdfd', 
+    },
+    buttonLight: {
+      backgroundColor: '#4d96ff',
+    },
+    textColor: {
+      color: '#212121',
+    },
+    centerTextContainer: {
+      width:'100%',
+      textAlign:'center', 
+      alignItems:'center',
+      justifyContent:'center'
+    },
+    cardLarge: {
+      backgroundColor:'#fdfdfd',
+      marginTop: '5%', 
+      padding:'5%', 
+      width:'90%', 
+      height: '80%', 
+      borderRadius: 20
+    },
+    fontSize20:{
+      fontSize: 20,
+    },
+    fontSize18:{
+      fontSize: 18,
+    },
+    fontSize15:{
+      fontSize: 15,
+    },
+    imageIcon:{
+      width: 30,
+      height: 30,
+      marginRight: '5%'
+    },
+    buttonText:{
+      textTransform:'uppercase',
+      color:'#fdfdfd'
+    },
+    button:{
+      padding:'5%', 
+      alignItems:'center',
+      justifyContent:'center',
+      borderRadius: 3
+    },
+    homeButtonGroupContainer: {
+      flexDirection:'row', 
+      alignItems:'center', 
+      justifyContent:'space-evenly',
+      marginTop:'25%'
+    },
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     listWrapper:{
       flex:1,
       backgroundColor: '#121212'
